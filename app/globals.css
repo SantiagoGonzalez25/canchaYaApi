@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f7f5;
+  --foreground: #0f172a;
+  --brand: #0f766e;
 }
 
 @theme inline {
@@ -12,15 +13,43 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(15, 118, 110, 0.08), transparent 32rem),
+    radial-gradient(circle at 88% 8%, rgba(37, 99, 235, 0.06), transparent 30rem),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(15, 118, 110, 0.2);
+}
+
+/* Scroll horizontal cómodo para el calendario en móvil. */
+.calendar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 118, 110, 0.35) transparent;
+}
+
+.calendar-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.calendar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(15, 118, 110, 0.35);
+  border-radius: 9999px;
+}
+
+@media print {
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
 }

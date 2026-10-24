@@ -1,0 +1,176 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { EnrollmentPanel } from "@/components/enrollment-panel";
+import { Badge, buttonClass, cardClass, PageHeader, ProgressBar, secondaryButtonClass } from "@/components/ui";
+import { getLiveAcude } from "@/lib/data/acudes";
+import { listMyActiveEnrollmentForAcude } from "@/lib/data/enrollments";
+import { ApiError } from "@/lib/errors";
+import { CATEGORY_LABELS, formatDate, WEEKDAY_LABELS } from "@/lib/labels";
+import { requireWebUser } from "@/lib/web/session";
+
+export const metadata: Metadata = { title: "Detalle del ACUDE" };
+
+async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["params"] }) {
+  const user = await requireWebUser();
+  const { id } = await params;
+  const acude = await getLiveAcude(id).catch((err) => {
+    if (err instanceof ApiError && err.status === 404) notFound();
+    throw err;
+  });
+  const existing =
+    user.role === "student" ? await listMyActiveEnrollmentForAcude(user.uid, acude.id) : null;
+
+  return (
+    <>
+      <Link href="/acudes" className="mb-4 inline-block text-sm font-semibold text-teal-700 hover:underline">
+        ← Volver a la cartelera
+      </Link>
+      <PageHeader
+        eyebrow={`${CATEGORY_LABELS[acude.category]} · ${acude.semester}`}
+        title={acude.name}
+        description={acude.description}
+        actions={
+          user.role === "student" ? (
+            <Badge tone={acude.totalAvailable > 0 ? "teal" : "rose"}>
+              {acude.totalAvailable > 0
+                ? `${acude.totalAvailable} cupos disponibles`
+                : "Sin cupos disponibles"}
+            </Badge>
+          ) : (
+            <Link href={`/manager/acudes/${acude.id}`} className={buttonClass}>
+              Editar ACUDE
+            </Link>
+          )
+        }
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+        <div className="flex flex-col gap-6">
+          <section className={`${cardClass} p-5`}>
+            <h2 className="text-lg font-bold text-slate-900">Programación semanal</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Cada franja es un subgrupo con cupo propio. El escenario se reserva institucionalmente
+              para el grupo, nunca para una persona.
+            </p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[540px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                    <th className="pb-2">Día</th>
+                    <th className="pb-2">Hora</th>
+                    <th className="pb-2">Escenario</th>
+                    <th className="pb-2">Ocupación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {acude.schedule.map((slot) => (
+                    <tr key={slot.id} className="border-b border-slate-100 last:border-0">
+                      <td className="py-3 font-semibold text-slate-800">{WEEKDAY_LABELS[slot.day]}</td>
+                      <td className="py-3 text-slate-600">
+                        {slot.startTime}–{slot.endTime}
+                      </td>
+                      <td className="py-3 text-slate-600">{slot.scenarioName}</td>
+                      <td className="w-48 py-3">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span>
+                            {slot.enrolled}/{slot.capacity}
+                          </span>
+                          <span>{slot.occupancyPct}%</span>
+                        </div>
+                        <div className="mt-1">
+                          <ProgressBar
+                            value={slot.occupancyPct}
+                            tone={
+                              slot.occupancyPct >= 90
+                                ? "rose"
+                                : slot.occupancyPct >= 60
+                                  ? "amber"
+                                  : "teal"
+                            }
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className={`${cardClass} p-5`}>
+            <h2 className="text-lg font-bold text-slate-900">Información académica</h2>
+            <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Docente</dt>
+                <dd className="mt-1 font-medium text-slate-800">{acude.teacherName}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Disciplina</dt>
+                <dd className="mt-1 font-medium text-slate-800">{acude.discipline}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Cupo por subgrupo</dt>
+                <dd className="mt-1 font-medium text-slate-800">{acude.maxCapacity} estudiantes</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Asistencia mínima</dt>
+                <dd className="mt-1 font-medium text-slate-800">{acude.attendanceMin}%</dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Requisitos</dt>
+                <dd className="mt-1 whitespace-pre-line text-slate-700">
+                  {acude.requirements || "Carné institucional y vestimenta adecuada."}
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Última actualización</dt>
+                <dd className="mt-1 text-slate-700">{formatDate(acude.updatedAt)}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <section className={`${cardClass} p-5`}>
+            <h2 className="text-lg font-bold text-slate-900">
+              {user.role === "student" ? "Inscripción" : "Administración"}
+            </h2>
+            {user.role === "student" ? (
+              <div className="mt-4">
+                <EnrollmentPanel acude={acude} userSex={user.sex} existing={existing} />
+              </div>
+            ) : (
+              <div className="mt-4 flex flex-col gap-3">
+                <p className="text-sm text-slate-600">
+                  Este ACUDE tiene {acude.currentEnrolled} inscripciones activas y{" "}
+                  {acude.schedule.length} subgrupos.
+                </p>
+                <Link href={`/manager/acudes/${acude.id}`} className={buttonClass}>
+                  Editar programación
+                </Link>
+                <Link href={`/manager/attendance?acudeId=${acude.id}`} className={secondaryButtonClass}>
+                  Pasar asistencia
+                </Link>
+                <Link href="/manager/occupation" className={secondaryButtonClass}>
+                  Ver ocupación
+                </Link>
+              </div>
+            )}
+          </section>
+        </aside>
+      </div>
+    </>
+  );
+}
+
+export default function AcudeDetailPage(props: PageProps<"/acudes/[id]">) {
+  return (
+    <Suspense
+      fallback={<div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />}
+    >
+      <AcudeDetail params={props.params} />
+    </Suspense>
+  );
+}
