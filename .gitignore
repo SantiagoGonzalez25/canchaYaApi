@@ -38,3 +38,14 @@ next-env.d.ts
 # Firebase service account keys (credenciales de administrador: NUNCA subir a git)
 *-firebase-adminsdk-*.json
 serviceAccount*.json
+
+# Documentos académicos y de referencia (no forman parte del código del proyecto)
+/Ficha de observación.pdf
+/Guia_1 API_Web_Biblioteca.pdf
+/Guia_2 App_Movil_Biblioteca.pdf
+/Informe_de_hallazgos_APA (1).docx
+
+# Salidas temporales de herramientas y reportes generados
+/coverage
+/test-results
+*.log

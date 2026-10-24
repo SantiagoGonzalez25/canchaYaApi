@@ -11,11 +11,13 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx --env-file=.env scripts/seed.mts",
+    "seed:demo": "tsx --env-file=.env scripts/seed.mts --demo --reset",
     "set-role": "tsx --env-file=.env scripts/set-role.mts",
     "create-user": "tsx --env-file=.env scripts/create-user.mts"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0",
+    "highcharts": "^12.6.2",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -23,6 +25,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@seriousme/openapi-schema-validator": "^2.11.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
