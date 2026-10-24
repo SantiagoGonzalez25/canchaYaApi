@@ -281,26 +281,24 @@ async function ReportsContent({
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {kind === "attendance" ? (
           <>
-            <StatCard label="Registros" value={report.summary.total} icon="📝" />
-            <StatCard label="Asistencias" value={report.summary.present} tone="blue" icon="✅" />
-            <StatCard label="Ausencias" value={report.summary.absent} tone="rose" icon="❌" />
+            <StatCard label="Registros" value={report.summary.total} />
+            <StatCard label="Asistencias" value={report.summary.present} tone="blue" />
+            <StatCard label="Ausencias" value={report.summary.absent} tone="rose" />
             <StatCard
               label="Asistencia efectiva"
               value={`${report.summary.attendanceRate}%`}
               tone="violet"
-              icon="📊"
             />
           </>
         ) : (
           <>
-            <StatCard label="Eventos de inscripción" value={report.summary.total} icon="🎓" />
-            <StatCard label="Activas" value={report.summary.active} tone="blue" icon="🟢" />
-            <StatCard label="Canceladas" value={report.summary.canceled} tone="rose" icon="🔴" />
+            <StatCard label="Eventos de inscripción" value={report.summary.total} />
+            <StatCard label="Activas" value={report.summary.active} tone="blue" />
+            <StatCard label="Canceladas" value={report.summary.canceled} tone="rose" />
             <StatCard
               label="Tasa de cancelación"
               value={`${total > 0 ? Math.round((report.summary.canceled / total) * 100) : 0}%`}
               tone="amber"
-              icon="📉"
             />
           </>
         )}
@@ -360,10 +358,10 @@ async function ReportsContent({
       </section>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-        <Badge tone="neutral">Alta trazabilidad</Badge>
+        <Badge tone="neutral">Datos del servidor</Badge>
         <span>
-          Los reportes se calculan con los campos desnormalizados de cada inscripción y registro de
-          asistencia, no con datos del cliente.
+          Los reportes se calculan con los campos registrados en cada inscripción y en cada registro
+          de asistencia.
         </span>
       </div>
     </>
@@ -376,7 +374,7 @@ export default function ReportsPage(props: PageProps<"/manager/reports">) {
       <PageHeader
         eyebrow="Gestión · Analítica"
         title="Reportes de eventos y asistencia"
-        description="Filtra por todos los campos del formulario y por fechas. Visualiza con Highcharts y exporta a CSV."
+        description="Filtra por todos los campos del formulario y por fechas. Consulta los resultados en gráficas y exporta a CSV."
         actions={
           <Link href="/manager/attendance" className={secondaryButtonClass}>
             Registrar asistencia

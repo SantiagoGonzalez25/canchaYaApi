@@ -21,22 +21,21 @@ export default function LoginPage() {
           Bienestar Institucional · TdeA
         </p>
         <h1 className="mt-3 text-5xl font-black leading-[1.05] tracking-tight text-slate-900">
-          Tu tiempo libre,
+          Cartelera digital
           <br />
-          <span className="text-teal-700">mejor organizado.</span>
+          <span className="text-teal-700">de ACUDES.</span>
         </h1>
         <p className="mt-5 max-w-md text-base leading-relaxed text-slate-600">
-          Consulta la cartelera digital de ACUDES, inscríbete a un subgrupo en tiempo real y revisa
-          la ocupación de los escenarios. Sin reservas individuales: todo pasa por la oferta
-          formativa y deportiva institucional.
+          Consulta la programación de las actividades culturales y deportivas, inscríbete a un
+          subgrupo y revisa la ocupación de los escenarios institucionales.
         </p>
         <div className="mt-8 grid grid-cols-3 gap-3">
           {[
-            ["10", "ACUDES en cartelera"],
+            ["10", "ACUDES publicados"],
             ["8", "Escenarios"],
-            ["100%", "Trazabilidad"],
+            ["3", "Roles de acceso"],
           ].map(([value, label]) => (
-            <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div key={label} className="rounded-xl border border-slate-200 bg-white p-4">
               <p className="text-2xl font-black text-teal-700">{value}</p>
               <p className="text-xs font-medium text-slate-500">{label}</p>
             </div>
@@ -44,7 +43,7 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <Suspense fallback={null}>
           <RedirectIfSignedIn />
         </Suspense>
@@ -56,12 +55,6 @@ export default function LoginPage() {
           </p>
         </div>
         <AuthForm mode="login" />
-        <div className="mt-5 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
-          <p className="font-semibold text-slate-600">Cuentas demo (si ejecutaste el seed con --demo)</p>
-          <p className="mt-1 font-mono">estudiante1@canchaya.demo · Demo1234!</p>
-          <p className="font-mono">gestor@canchaya.demo · Gestor1234!</p>
-          <p className="font-mono">admin@canchaya.demo · Admin1234!</p>
-        </div>
       </section>
     </div>
   );

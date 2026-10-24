@@ -44,8 +44,8 @@ export default function CalendarPage() {
     <>
       <PageHeader
         eyebrow="Calendario"
-        title="Tu semana ACUDE, de un vistazo"
-        description="Navega entre semanas, filtra por categoría y abre cada franja para inscribirte o revisar la ocupación del escenario."
+        title="Calendario semanal de ACUDES"
+        description="Consulta las franjas de la semana, filtra por categoría y abre cada sesión para inscribirte o revisar su ocupación."
         actions={
           <>
             <Link href="/acudes" className={secondaryButtonClass}>

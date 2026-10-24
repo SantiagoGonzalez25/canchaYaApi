@@ -34,8 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Suspense>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">{children}</main>
         <footer className="border-t border-slate-200/70 py-5 text-center text-xs text-slate-500">
-          CanchaYa · Bienestar Institucional TdeA · Regla de cero reservas: la ocupación nace de los
-          ACUDES, no de reservas individuales.
+          CanchaYa · Bienestar Institucional TdeA
         </footer>
       </body>
     </html>

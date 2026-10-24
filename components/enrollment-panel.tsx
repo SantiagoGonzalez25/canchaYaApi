@@ -31,17 +31,12 @@ export function EnrollmentPanel({
   if (existing) {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white">
-            ✓
-          </span>
-          <div>
-            <p className="text-sm font-bold text-emerald-900">Ya estás inscrito</p>
-            <p className="text-xs text-emerald-700">
-              {WEEKDAY_LABELS[existing.day]} {existing.startTime}–{existing.endTime} ·{" "}
-              {existing.scenarioName}
-            </p>
-          </div>
+        <div>
+          <p className="text-sm font-bold text-emerald-900">Ya estás inscrito</p>
+          <p className="text-xs text-emerald-700">
+            {WEEKDAY_LABELS[existing.day]} {existing.startTime}–{existing.endTime} ·{" "}
+            {existing.scenarioName}
+          </p>
         </div>
         <p className="mt-3 text-xs text-emerald-800">
           Inscripción del {new Date(existing.enrolledAt).toLocaleDateString("es-CO")}. Si cancelas,

@@ -54,7 +54,7 @@ async function MyEnrollments({
           description={
             status === "active"
               ? "Explora la cartelera o el calendario semanal y elige un subgrupo con cupo."
-              : "Cuando canceles una inscripción quedará registrada aquí para tu trazabilidad."
+              : "Cuando canceles una inscripción quedará registrada aquí en tu historial."
           }
           action={
             <Link href="/acudes" className={buttonClass}>

@@ -97,19 +97,17 @@ async function AttendanceContent({
       </form>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Inscritos activos" value={enrollments.length} icon="🎓" />
-        <StatCard label="Registros del día" value={recorded} tone="blue" icon="📝" />
+        <StatCard label="Inscritos activos" value={enrollments.length} />
+        <StatCard label="Registros del día" value={recorded} tone="blue" />
         <StatCard
           label="Asistencia efectiva"
           value={`${recorded > 0 ? Math.round((present / recorded) * 100) : 0}%`}
           tone="violet"
-          icon="✅"
         />
         <StatCard
           label="Asistencia mínima"
           value={`${acude.attendanceMin}%`}
           tone="amber"
-          icon="⚠️"
         />
       </div>
 

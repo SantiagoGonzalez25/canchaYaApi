@@ -415,10 +415,10 @@ export function AcudeForm({
               </select>
             </Field>
             <div className="rounded-xl bg-teal-50 p-3 text-xs leading-relaxed text-teal-800">
-              <p className="font-bold">Regla de cero reservas</p>
+              <p className="font-bold">Programación de subgrupos</p>
               <p className="mt-1">
-                Este formulario programa subgrupos de un ACUDE. No crea reservas individuales de
-                escenarios.
+                Este formulario programa los subgrupos de un ACUDE. No genera reservas individuales
+                de escenarios.
               </p>
             </div>
             {state.error && <Alert kind="error">{state.error}</Alert>}

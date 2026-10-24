@@ -111,7 +111,7 @@ export default function AcudesPage(props: PageProps<"/acudes">) {
       <PageHeader
         eyebrow="Cartelera digital"
         title="Oferta formativa y deportiva"
-        description="Horarios actualizados, subgrupos, cupos en tiempo real y el escenario de cada sesión. Sin reservas: te inscribes al ACUDE."
+        description="Consulta horarios, subgrupos, cupos y el escenario de cada sesión. La inscripción se realiza directamente al ACUDE."
         actions={
           <Link href="/calendar" className={buttonClass}>
             Ver calendario semanal

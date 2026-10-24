@@ -77,8 +77,8 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
     <>
       <PageHeader
         eyebrow={`Hola, ${user.name.split(" ")[0]}`}
-        title="Tu agenda ACUDE"
-        description="Inscripciones activas, próximas sesiones y cupos disponibles en un solo lugar."
+        title="Resumen de inscripciones"
+        description="Consulta tus ACUDES activos, las próximas sesiones y los cupos disponibles."
         actions={
           <>
             <Link href="/calendar" className={secondaryButtonClass}>
@@ -96,27 +96,23 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
           label="Mis ACUDES activos"
           value={enrollments.length}
           hint="Inscripciones vigentes"
-          icon="🎓"
         />
         <StatCard
           label="ACUDES en cartelera"
           value={acudes.length}
           hint="Oferta publicada"
-          icon="📋"
           tone="blue"
         />
         <StatCard
           label="Cupos libres"
           value={availableSlots}
           hint="En todos los subgrupos"
-          icon="🟢"
           tone="violet"
         />
         <StatCard
-          label="Ahora mismo"
+          label="Sesiones en curso"
           value={now.length}
-          hint={now.length > 0 ? "Sesiones en curso" : "No hay sesiones en curso"}
-          icon="⏱️"
+          hint={now.length > 0 ? "Sesiones activas en este momento" : "No hay sesiones en curso"}
           tone={now.length > 0 ? "amber" : "teal"}
         />
       </div>
@@ -190,7 +186,7 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
 
       <section className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">Recomendados para ti</h2>
+          <h2 className="text-lg font-bold text-slate-900">ACUDES con cupos disponibles</h2>
           <Link href="/acudes" className="text-xs font-semibold text-teal-700 hover:underline">
             Ver todos →
           </Link>
@@ -254,8 +250,8 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
     <>
       <PageHeader
         eyebrow={`${user.role === "admin" ? "Administración" : "Gestión"} · ${formatDate(todayKey())}`}
-        title="Panel de ocupación y trazabilidad"
-        description="Estado en vivo de los escenarios, subgrupos publicados y eventos de inscripción."
+        title="Panel de gestión de ACUDES"
+        description="Estado de los escenarios, subgrupos publicados e inscripciones activas."
         actions={
           <>
             <Link href="/manager/reports" className={secondaryButtonClass}>
@@ -273,28 +269,24 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
           label="Sesiones en curso"
           value={now.length}
           hint={`${free} escenarios libres ahora`}
-          icon="🟢"
           tone={now.length > 0 ? "amber" : "teal"}
         />
         <StatCard
           label="ACUDES publicados"
           value={acudes.length}
           hint={`${scenarios.length} escenarios registrados`}
-          icon="🏟️"
           tone="blue"
         />
         <StatCard
           label="Inscripciones activas"
           value={activeEnrollments.length}
           hint={`${report.summary.active} activas en 30 días`}
-          icon="🎓"
           tone="violet"
         />
         <StatCard
           label="Asistencia media"
           value={`${attendance.summary.attendanceRate}%`}
           hint={`${attendance.summary.total} registros de asistencia`}
-          icon="📊"
           tone="rose"
         />
       </div>
@@ -392,22 +384,17 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["Gestionar ACUDES", "Crea grupos, horarios y cupos.", "/manager/acudes", "🗂️"],
-          ["Ocupación", "Trazabilidad por escenario.", "/manager/occupation", "🏟️"],
-          ["Asistencia", "Registra el uso real.", "/manager/attendance", "✅"],
-          ["Reportes", "Eventos y asistencia con Highcharts.", "/manager/reports", "📈"],
-        ].map(([title, text, href, icon]) => (
+          ["Gestionar ACUDES", "Crea grupos, horarios y cupos.", "/manager/acudes"],
+          ["Ocupación", "Consulta los grupos por escenario.", "/manager/occupation"],
+          ["Asistencia", "Registra la asistencia de cada subgrupo.", "/manager/attendance"],
+          ["Reportes", "Consulta eventos y asistencia.", "/manager/reports"],
+        ].map(([title, text, href]) => (
           <Link
-            key={href as string}
-            href={href as string}
+            key={href}
+            href={href}
             className={`${cardClass} group p-4 transition hover:border-teal-300`}
           >
-            <span className="text-xl" aria-hidden>
-              {icon}
-            </span>
-            <p className="mt-2 text-sm font-bold text-slate-800 group-hover:text-teal-800">
-              {title}
-            </p>
+            <p className="text-sm font-bold text-slate-800 group-hover:text-teal-800">{title}</p>
             <p className="mt-1 text-xs text-slate-500">{text}</p>
           </Link>
         ))}

@@ -134,23 +134,21 @@ async function OccupationContent({
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Escenarios" value={occupation.scenarios.length} icon="🏟️" />
+        <StatCard label="Escenarios" value={occupation.scenarios.length} />
         <StatCard
           label="En uso ahora"
           value={inSession.length}
           tone={inSession.length > 0 ? "amber" : "teal"}
-          icon="🟢"
         />
-        <StatCard label="Libres" value={free} tone="blue" icon="⚪" />
-        <StatCard label="Franjas del día" value={sessions} tone="violet" icon="🕒" />
+        <StatCard label="Libres" value={free} tone="blue" />
+        <StatCard label="Franjas del día" value={sessions} tone="violet" />
       </div>
 
       <div className="mb-4 rounded-2xl border border-teal-200 bg-teal-50/70 p-4 text-sm text-teal-900">
-        <p className="font-bold">Trazabilidad sin reservas</p>
+        <p className="font-bold">Criterio de ocupación</p>
         <p className="mt-1 text-xs leading-relaxed text-teal-800">
           La ocupación se calcula con los ACUDES publicados y sus inscripciones activas. Un escenario
-          aparece ocupado únicamente porque un grupo tiene una franja programada, nunca por una
-          reserva individual.
+          aparece ocupado porque un grupo tiene una franja programada.
         </p>
       </div>
 
@@ -220,7 +218,7 @@ export default function OccupationPage(props: PageProps<"/manager/occupation">) 
       <PageHeader
         eyebrow="Gestión · Tiempo real"
         title="Panel de ocupación"
-        description="Qué grupo ACUDE usa cada escenario, en qué franja y con cuántos inscritos. La trazabilidad que antes no existía."
+        description="Consulta qué grupo ACUDE usa cada escenario, en qué franja y con cuántos inscritos."
         actions={
           <>
             <Link href="/manager/reports" className={secondaryButtonClass}>

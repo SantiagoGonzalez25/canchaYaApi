@@ -109,13 +109,11 @@ export function StatCard({
   label,
   value,
   hint,
-  icon,
   tone = "teal",
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
-  icon?: string;
   tone?: "teal" | "amber" | "blue" | "violet" | "rose";
 }) {
   const tones = {
@@ -127,10 +125,7 @@ export function StatCard({
   } as const;
   return (
     <div className={`rounded-2xl border border-slate-200 bg-gradient-to-br p-4 ${tones[tone]}`}>
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-        {icon && <span aria-hidden className="text-xl">{icon}</span>}
-      </div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{value}</p>
       {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </div>
