@@ -119,6 +119,7 @@ Todos los errores tienen la forma:
 - **Sin cruces del estudiante**: no se puede inscribir dos veces al mismo ACUDE ni en franjas que se solapen.
 - **Cupos**: una cancelación libera el cupo de inmediato y actualiza `currentEnrolled`.
 - **Integridad del histórico**: archivar un ACUDE es borrado lógico; no se elimina la trazabilidad.
+- **Archivado seguro**: no se puede archivar un ACUDE con inscripciones activas; primero deben cancelarse.
 
 ## Panel web
 

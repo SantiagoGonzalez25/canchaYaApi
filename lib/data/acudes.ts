@@ -295,6 +295,13 @@ export async function updateAcude(
         .where("acudeId", "==", id)
         .where("status", "==", "active"),
     );
+    if (input.status === "archived" && activeSnap.size > 0) {
+      throw new ApiError(
+        409,
+        "INVALID_STATE",
+        `No puedes archivar un ACUDE con ${activeSnap.size} inscripciones activas. Cancélalas primero.`,
+      );
+    }
 
     const counts = new Map<string, number>();
     for (const doc of activeSnap.docs) {
@@ -349,10 +356,24 @@ export async function updateAcude(
 
 /** Borrado lógico: conserva el histórico de inscripciones y asistencia. */
 export async function archiveAcude(id: string): Promise<Acude> {
-  const ref = db().collection(ACUDES).doc(id);
-  return db().runTransaction(async (tx) => {
+  const firestore = db();
+  const ref = firestore.collection(ACUDES).doc(id);
+  return firestore.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+    const activeSnap = await tx.get(
+      firestore
+        .collection(ENROLLMENTS)
+        .where("acudeId", "==", id)
+        .where("status", "==", "active"),
+    );
+    if (activeSnap.size > 0) {
+      throw new ApiError(
+        409,
+        "INVALID_STATE",
+        `No puedes archivar un ACUDE con ${activeSnap.size} inscripciones activas. Cancélalas primero.`,
+      );
+    }
     const data = {
       ...(snap.data() as AcudeDoc),
       status: "archived" as const,
