@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { SESSION_COOKIE } from "../session-constants";
 import { SESSION_MAX_AGE_MS, verifySessionCookie } from "../services/auth";
@@ -48,5 +49,20 @@ export async function requireWebUser(roles?: Role | Role[]): Promise<AuthUser> {
 }
 
 export async function requireWebStaff(): Promise<AuthUser> {
+  return requireWebUser(["manager", "admin"]);
+}
+
+/**
+ * Variante para páginas: marca explícitamente el render en tiempo de petición
+ * antes de leer cookies o datos. Con cacheComponents, esto evita que Next
+ * prerenderice operaciones inestables (fechas, Firestore, sesión).
+ */
+export async function requirePageUser(roles?: Role | Role[]): Promise<AuthUser> {
+  await connection();
+  return requireWebUser(roles);
+}
+
+export async function requirePageStaff(): Promise<AuthUser> {
+  await connection();
   return requireWebUser(["manager", "admin"]);
 }

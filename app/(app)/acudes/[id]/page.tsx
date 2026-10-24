@@ -8,12 +8,12 @@ import { getLiveAcude } from "@/lib/data/acudes";
 import { listMyActiveEnrollmentForAcude } from "@/lib/data/enrollments";
 import { ApiError } from "@/lib/errors";
 import { CATEGORY_LABELS, formatDate, WEEKDAY_LABELS } from "@/lib/labels";
-import { requireWebUser } from "@/lib/web/session";
+import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Detalle del ACUDE" };
 
 async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["params"] }) {
-  const user = await requireWebUser();
+  const user = await requirePageUser();
   const { id } = await params;
   const acude = await getLiveAcude(id).catch((err) => {
     if (err instanceof ApiError && err.status === 404) notFound();

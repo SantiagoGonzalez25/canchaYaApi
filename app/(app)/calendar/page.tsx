@@ -6,12 +6,12 @@ import { buttonClass, PageHeader, secondaryButtonClass } from "@/components/ui";
 import { listLiveAcudes } from "@/lib/data/acudes";
 import { listMyEnrollments } from "@/lib/data/enrollments";
 import { todayKey } from "@/lib/labels";
-import { requireWebUser } from "@/lib/web/session";
+import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Calendario semanal" };
 
 async function CalendarContent() {
-  const user = await requireWebUser();
+  const user = await requirePageUser();
   const [acudes, myEnrollments] = await Promise.all([
     listLiveAcudes(),
     user.role === "student"

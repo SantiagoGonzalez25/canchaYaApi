@@ -27,7 +27,7 @@ import {
 } from "@/lib/labels";
 import { reportQuerySchema, type ReportQuery } from "@/lib/schemas";
 import type { ReportGroupBy } from "@/lib/types";
-import { requireWebStaff } from "@/lib/web/session";
+import { requirePageStaff } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Reportes" };
 
@@ -54,7 +54,7 @@ async function ReportsContent({
 }: {
   searchParams: PageProps<"/manager/reports">["searchParams"];
 }) {
-  await requireWebStaff();
+  await requirePageStaff();
   const params = await searchParams;
   const kind = first(params.kind) === "attendance" ? "attendance" : "enrollments";
   const defaultGroup: ReportGroupBy = kind === "attendance" ? "acude" : "date";

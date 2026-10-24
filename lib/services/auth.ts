@@ -241,6 +241,7 @@ export async function listManagers(): Promise<UserProfile[]> {
   const snap = await db().collection("users").where("role", "==", "manager").get();
   return snap.docs
     .map((doc) => doc.data() as UserProfile)
+    .filter((user) => typeof user.name === "string" && user.name.length > 0)
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 

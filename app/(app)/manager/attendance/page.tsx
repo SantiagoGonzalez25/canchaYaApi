@@ -22,7 +22,7 @@ import {
   WEEKDAY_LABELS,
   weekdayOf,
 } from "@/lib/labels";
-import { requireWebStaff } from "@/lib/web/session";
+import { requirePageStaff } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Control de asistencia" };
 
@@ -34,7 +34,7 @@ async function AttendanceContent({
 }: {
   searchParams: PageProps<"/manager/attendance">["searchParams"];
 }) {
-  await requireWebStaff();
+  await requirePageStaff();
   const params = await searchParams;
   const [acudes, scenarios] = await Promise.all([listAcudes(), listScenarios()]);
   if (acudes.length === 0) {

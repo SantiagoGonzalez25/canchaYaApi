@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { getWebUser } from "@/lib/web/session";
@@ -7,6 +8,7 @@ import { getWebUser } from "@/lib/web/session";
 export const metadata: Metadata = { title: "Crear cuenta" };
 
 async function RedirectIfSignedIn() {
+  await connection();
   if (await getWebUser()) redirect("/dashboard");
   return null;
 }

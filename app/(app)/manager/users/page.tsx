@@ -5,12 +5,12 @@ import { ManagerForm } from "@/components/manager-form";
 import { Badge, cardClass, PageHeader, secondaryButtonClass } from "@/components/ui";
 import { SEX_LABELS, formatDate } from "@/lib/labels";
 import { listManagers } from "@/lib/services/auth";
-import { requireWebUser } from "@/lib/web/session";
+import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Gestores institucionales" };
 
 async function UsersContent() {
-  await requireWebUser("admin");
+  await requirePageUser("admin");
   const managers = await listManagers();
   return (
     <div className="grid gap-6 lg:grid-cols-[0.4fr_0.6fr]">

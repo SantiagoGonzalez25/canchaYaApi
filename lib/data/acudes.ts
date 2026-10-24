@@ -20,11 +20,28 @@ import type {
   Scenario,
 } from "../types";
 import type { AcudeInput, ScheduleSlotInput } from "../schemas";
+import { isScenarioDocument } from "./scenarios";
 
 export const ACUDES = "acudes";
 export const ENROLLMENTS = "enrollments";
 
 type AcudeDoc = Omit<Acude, "id">;
+
+/**
+ * Los proyectos de la app móvil y la API comparten Firebase. La app móvil usa
+ * documentos legacy con campos en español (`nombre`, `horarios`). Esta API
+ * ignora esos documentos para no mezclar dos modelos de datos.
+ */
+export function isAcudeDocument(data: unknown): data is AcudeDoc {
+  if (!data || typeof data !== "object") return false;
+  const value = data as Partial<AcudeDoc>;
+  return (
+    typeof value.name === "string" &&
+    value.name.length > 0 &&
+    Array.isArray(value.schedule) &&
+    typeof value.maxCapacity === "number"
+  );
+}
 
 export function toAcude(id: string, data: AcudeDoc): Acude {
   return {
@@ -78,7 +95,10 @@ export async function listAcudes(filter: AcudeFilter = {}): Promise<Acude[]> {
   let query: FirebaseFirestore.Query = db().collection(ACUDES);
   if (filter.updatedSince) query = query.where("updatedAt", ">", filter.updatedSince);
   const snap = await query.get();
-  let acudes = snap.docs.map((doc) => toAcude(doc.id, doc.data() as AcudeDoc));
+  let acudes = snap.docs.flatMap((doc) => {
+    const data = doc.data();
+    return isAcudeDocument(data) ? [toAcude(doc.id, data)] : [];
+  });
   if (filter.status) acudes = acudes.filter((item) => item.status === filter.status);
   if (filter.category) acudes = acudes.filter((item) => item.category === filter.category);
   if (filter.teacherId) acudes = acudes.filter((item) => item.teacherId === filter.teacherId);
@@ -99,7 +119,9 @@ export async function listAcudes(filter: AcudeFilter = {}): Promise<Acude[]> {
 
 export async function getAcude(id: string): Promise<Acude> {
   const snap = await db().collection(ACUDES).doc(id).get();
-  if (!snap.exists) throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+  if (!snap.exists || !isAcudeDocument(snap.data())) {
+    throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+  }
   return toAcude(snap.id, snap.data() as AcudeDoc);
 }
 
@@ -130,7 +152,10 @@ export async function listLiveAcudes(
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   const scenarios = new Map<string, Scenario>(
-    scenarioSnap.docs.map((doc) => [doc.id, { id: doc.id, ...doc.data() } as Scenario]),
+    scenarioSnap.docs.flatMap((doc) => {
+      const data = doc.data();
+      return isScenarioDocument(data) ? [[doc.id, { id: doc.id, ...data } as Scenario]] : [];
+    }),
   );
 
   const result: LiveAcude[] = [];
@@ -179,7 +204,12 @@ export async function getLiveAcude(id: string): Promise<LiveAcude> {
     counts.set(data.slotId, (counts.get(data.slotId) ?? 0) + 1);
   }
   const scenarios = await db().collection("scenarios").get();
-  const names = new Map(scenarios.docs.map((doc) => [doc.id, (doc.data() as Scenario).name]));
+  const names = new Map(
+    scenarios.docs.flatMap((doc) => {
+      const data = doc.data();
+      return isScenarioDocument(data) ? [[doc.id, data.name]] : [];
+    }),
+  );
   const slots = acude.schedule.map((slot) => {
     const capacity = slotCapacity(slot, acude.maxCapacity);
     const enrolled = counts.get(slot.id) ?? 0;
@@ -261,7 +291,10 @@ export async function createAcude(input: AcudeInput, user: AuthUser): Promise<Ac
     // Todas las lecturas primero (regla de transacciones de Firestore).
     const allSnap = await tx.get(firestore.collection(ACUDES));
     await assertScenariosExist(tx, schedule);
-    const others = allSnap.docs.map((doc) => toAcude(doc.id, doc.data() as AcudeDoc));
+    const others = allSnap.docs.flatMap((doc) => {
+      const data = doc.data();
+      return isAcudeDocument(data) ? [toAcude(doc.id, data)] : [];
+    });
     const conflicts = findScheduleConflicts(
       { id: ref.id, name: input.name, teacherId: input.teacherId, schedule },
       others,
@@ -284,7 +317,9 @@ export async function updateAcude(
 
   return firestore.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
-    if (!snap.exists) throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+    if (!snap.exists || !isAcudeDocument(snap.data())) {
+      throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+    }
     const previous = snap.data() as AcudeDoc;
 
     const allSnap = await tx.get(firestore.collection(ACUDES));
@@ -331,7 +366,10 @@ export async function updateAcude(
       }
     }
 
-    const others = allSnap.docs.map((doc) => toAcude(doc.id, doc.data() as AcudeDoc));
+    const others = allSnap.docs.flatMap((doc) => {
+      const data = doc.data();
+      return isAcudeDocument(data) ? [toAcude(doc.id, data)] : [];
+    });
     const conflicts = findScheduleConflicts(
       { id, name: input.name, teacherId: input.teacherId, schedule },
       others,
@@ -360,7 +398,9 @@ export async function archiveAcude(id: string): Promise<Acude> {
   const ref = firestore.collection(ACUDES).doc(id);
   return firestore.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
-    if (!snap.exists) throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+    if (!snap.exists || !isAcudeDocument(snap.data())) {
+      throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+    }
     const activeSnap = await tx.get(
       firestore
         .collection(ENROLLMENTS)
@@ -389,6 +429,9 @@ export async function listScenarioOptions(): Promise<Scenario[]> {
   const snap = await db().collection("scenarios").get();
   return snap.docs
     .map((doc) => ({ id: doc.id, ...doc.data() }) as Scenario)
-    .filter((scenario) => scenario.status !== "inactive")
+    .filter(
+      (scenario) =>
+        typeof scenario.name === "string" && scenario.name.length > 0 && scenario.status !== "inactive",
+    )
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }

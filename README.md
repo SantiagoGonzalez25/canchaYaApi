@@ -38,6 +38,10 @@ Abre `http://localhost:3000`. La documentación interactiva está en `/api/docs`
 
 Nunca subas `.env` ni el JSON de la cuenta de servicio. Firestore debe tener reglas que nieguen todo acceso directo de clientes (`firestore.rules`).
 
+### Compatibilidad con datos legacy
+
+Si el proyecto de Firebase ya tenía datos de la app móvil anterior (`acudes` con `nombre`/`horarios` o usuarios con `rol` en español), la API **los ignora** y solo trabaja con el modelo nuevo (`name`, `schedule`, `role`). El seed crea los documentos nuevos sin borrar los antiguos.
+
 ### Cuentas demo
 
 Solo si ejecutaste `pnpm seed:demo`:

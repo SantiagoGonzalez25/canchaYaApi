@@ -8,6 +8,12 @@ export const SCENARIOS = "scenarios";
 
 type ScenarioDoc = Omit<Scenario, "id">;
 
+export function isScenarioDocument(data: unknown): data is ScenarioDoc {
+  if (!data || typeof data !== "object") return false;
+  const value = data as Partial<ScenarioDoc>;
+  return typeof value.name === "string" && value.name.length > 0;
+}
+
 export function toScenario(id: string, data: ScenarioDoc): Scenario {
   return { id, ...data };
 }
@@ -22,14 +28,19 @@ export async function listScenarios(filter: ScenarioFilter = {}): Promise<Scenar
   let query: FirebaseFirestore.Query = db().collection(SCENARIOS);
   if (filter.updatedSince) query = query.where("updatedAt", ">", filter.updatedSince);
   const snap = await query.get();
-  let scenarios = snap.docs.map((doc) => toScenario(doc.id, doc.data() as ScenarioDoc));
+  let scenarios = snap.docs.flatMap((doc) => {
+    const data = doc.data();
+    return isScenarioDocument(data) ? [toScenario(doc.id, data)] : [];
+  });
   if (filter.status) scenarios = scenarios.filter((item) => item.status === filter.status);
   return scenarios.sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
 export async function getScenario(id: string): Promise<Scenario> {
   const snap = await db().collection(SCENARIOS).doc(id).get();
-  if (!snap.exists) throw new ApiError(404, "NOT_FOUND", "Escenario no encontrado");
+  if (!snap.exists || !isScenarioDocument(snap.data())) {
+    throw new ApiError(404, "NOT_FOUND", "Escenario no encontrado");
+  }
   return toScenario(snap.id, snap.data() as ScenarioDoc);
 }
 

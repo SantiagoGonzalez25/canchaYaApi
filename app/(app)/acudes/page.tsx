@@ -12,7 +12,7 @@ import {
 } from "@/components/ui";
 import { listLiveAcudes } from "@/lib/data/acudes";
 import { CATEGORY_LABELS, WEEKDAYS, WEEKDAY_LABELS } from "@/lib/labels";
-import { requireWebUser } from "@/lib/web/session";
+import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Cartelera digital" };
 
@@ -20,7 +20,7 @@ const first = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value;
 
 async function LiveList({ searchParams }: { searchParams: PageProps<"/acudes">["searchParams"] }) {
-  const user = await requireWebUser();
+  const user = await requirePageUser();
   const params = await searchParams;
   const q = first(params.q)?.trim().slice(0, 100) || undefined;
   const category = first(params.category) as keyof typeof CATEGORY_LABELS | undefined;

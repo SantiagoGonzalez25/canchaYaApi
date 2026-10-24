@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { getWebUser } from "@/lib/web/session";
@@ -7,6 +8,7 @@ import { getWebUser } from "@/lib/web/session";
 export const metadata: Metadata = { title: "Iniciar sesión" };
 
 async function RedirectIfSignedIn() {
+  await connection();
   if (await getWebUser()) redirect("/dashboard");
   return null;
 }
@@ -30,7 +32,7 @@ export default function LoginPage() {
         </p>
         <div className="mt-8 grid grid-cols-3 gap-3">
           {[
-            ["9", "ACUDES de ejemplo"],
+            ["10", "ACUDES en cartelera"],
             ["8", "Escenarios"],
             ["100%", "Trazabilidad"],
           ].map(([value, label]) => (

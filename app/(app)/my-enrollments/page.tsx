@@ -12,7 +12,7 @@ import {
 } from "@/components/ui";
 import { listMyEnrollments } from "@/lib/data/enrollments";
 import { CATEGORY_LABELS, formatDate, WEEKDAY_LABELS } from "@/lib/labels";
-import { requireWebUser } from "@/lib/web/session";
+import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Mis ACUDES" };
 
@@ -24,7 +24,7 @@ async function MyEnrollments({
 }: {
   searchParams: PageProps<"/my-enrollments">["searchParams"];
 }) {
-  const user = await requireWebUser("student");
+  const user = await requirePageUser("student");
   const params = await searchParams;
   const status = first(params.status) === "canceled" ? "canceled" : "active";
   const all = await listMyEnrollments(user, {});

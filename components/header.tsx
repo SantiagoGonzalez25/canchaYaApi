@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { logoutAction } from "@/app/actions";
 import { ROLE_LABELS } from "@/lib/labels";
 import { getWebUser } from "@/lib/web/session";
@@ -31,6 +32,9 @@ function navItems(role: "student" | "manager" | "admin"): NavItem[] {
 }
 
 export async function Header() {
+  // La cookie de sesión se verifica con Firebase (usa la hora actual): debe
+  // ocurrir en request time, nunca durante el prerender del shell.
+  await connection();
   const user = await getWebUser();
   const items = user ? navItems(user.role) : [];
 

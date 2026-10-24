@@ -13,7 +13,7 @@ import {
   todayKey,
   WEEKDAY_LABELS,
 } from "@/lib/labels";
-import { requireWebUser } from "@/lib/web/session";
+import { requirePageUser } from "@/lib/web/session";
 import type { AuthUser, LiveAcude } from "@/lib/types";
 import {
   Badge,
@@ -417,7 +417,7 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
 }
 
 async function DashboardContent() {
-  const user = await requireWebUser();
+  const user = await requirePageUser();
   if (user.role === "student") return <StudentDashboard user={user} />;
   return <StaffDashboard user={user} />;
 }

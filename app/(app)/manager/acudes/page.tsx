@@ -23,7 +23,7 @@ import {
   formatDate,
   WEEKDAY_LABELS,
 } from "@/lib/labels";
-import { requireWebStaff } from "@/lib/web/session";
+import { requirePageStaff } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Gestión de ACUDES" };
 
@@ -35,7 +35,7 @@ async function AcudeManager({
 }: {
   searchParams: PageProps<"/manager/acudes">["searchParams"];
 }) {
-  await requireWebStaff();
+  await requirePageStaff();
   const params = await searchParams;
   const q = first(params.q)?.trim() || undefined;
   const status = first(params.status) as

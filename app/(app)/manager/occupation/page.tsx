@@ -21,7 +21,7 @@ import {
   WEEKDAY_LABELS,
 } from "@/lib/labels";
 import type { OccupationSession, SessionPhase } from "@/lib/types";
-import { requireWebStaff } from "@/lib/web/session";
+import { requirePageStaff } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Panel de ocupación" };
 
@@ -82,7 +82,7 @@ async function OccupationContent({
 }: {
   searchParams: PageProps<"/manager/occupation">["searchParams"];
 }) {
-  await requireWebStaff();
+  await requirePageStaff();
   const params = await searchParams;
   const requestedDate = first(params.date);
   const date = isDateKey(requestedDate) ? requestedDate : todayKey();

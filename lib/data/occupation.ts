@@ -10,6 +10,8 @@ import type {
   SessionPhase,
   Weekday,
 } from "../types";
+import { isAcudeDocument } from "./acudes";
+import { isScenarioDocument } from "./scenarios";
 
 export interface OccupationResult {
   date: string;
@@ -35,12 +37,14 @@ export async function getOccupation(
     firestore.collection("enrollments").where("status", "==", "active").get(),
   ]);
 
-  const scenarios = scenarioSnap.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Scenario,
-  );
-  const acudes = acudeSnap.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Acude,
-  );
+  const scenarios = scenarioSnap.docs.flatMap((doc) => {
+    const data = doc.data();
+    return isScenarioDocument(data) ? [{ id: doc.id, ...data } as Scenario] : [];
+  });
+  const acudes = acudeSnap.docs.flatMap((doc) => {
+    const data = doc.data();
+    return isAcudeDocument(data) ? [{ id: doc.id, ...data } as Acude] : [];
+  });
   const counts = new Map<string, number>();
   for (const doc of enrollmentSnap.docs) {
     const data = doc.data() as { acudeId: string; slotId: string };

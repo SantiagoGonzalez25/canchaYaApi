@@ -5,7 +5,7 @@ import { AcudeForm } from "@/components/acude-form";
 import { buttonClass, EmptyState, PageHeader, secondaryButtonClass } from "@/components/ui";
 import { listScenarioOptions } from "@/lib/data/acudes";
 import { listManagers } from "@/lib/services/auth";
-import { requireWebStaff } from "@/lib/web/session";
+import { requirePageStaff } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Nuevo ACUDE" };
 
@@ -17,7 +17,7 @@ function currentSemester(): string {
 }
 
 async function NewAcude() {
-  await requireWebStaff();
+  await requirePageStaff();
   const [scenarios, managers] = await Promise.all([listScenarioOptions(), listManagers()]);
   if (scenarios.length === 0) {
     return (
