@@ -264,6 +264,7 @@ export function buildOpenApiSpec(): Json {
             status: { type: "string", enum: ["draft", "published", "archived"] },
             semester: { type: "string" },
             imageUrl: { type: ["string", "null"] },
+            imageStoragePath: { type: ["string", "null"] },
             requirements: { type: "string" },
             attendanceMin: { type: "integer" },
             createdBy: { type: ["string", "null"] },
@@ -340,6 +341,7 @@ export function buildOpenApiSpec(): Json {
             enrollmentId: { type: "string" },
             userId: { type: "string" },
             userName: { type: "string" },
+            userEmail: { type: "string" },
             userSex: { type: "string" },
             category: { type: "string" },
             discipline: { type: "string" },
@@ -351,7 +353,7 @@ export function buildOpenApiSpec(): Json {
             startTime: { type: "string" },
             endTime: { type: "string" },
             date: { type: "string", format: "date" },
-            status: { type: "string", enum: ["present", "absent", "late", "excused"] },
+            status: { type: "string", enum: ["present", "absent"] },
             notes: { type: "string" },
             recordedBy: { type: "string" },
             recordedAt: iso,
@@ -394,8 +396,6 @@ export function buildOpenApiSpec(): Json {
                 canceled: { type: "integer" },
                 present: { type: "integer" },
                 absent: { type: "integer" },
-                late: { type: "integer" },
-                excused: { type: "integer" },
                 attendanceRate: { type: "integer" },
               },
             },
@@ -639,6 +639,23 @@ export function buildOpenApiSpec(): Json {
           },
         },
       },
+      "/api/acudes/{id}/image": {
+        get: {
+          tags: ["ACUDES"],
+          summary: "Imagen de portada del ACUDE",
+          description:
+            "Imagen pública servida desde Firestore cuando el proyecto no tiene Firebase Storage habilitado.",
+          security: [],
+          parameters: [idParam],
+          responses: {
+            "200": {
+              description: "Imagen JPEG, PNG o WebP",
+              content: { "image/*": { schema: { type: "string", format: "binary" } } },
+            },
+            "404": r("NotFound"),
+          },
+        },
+      },
       "/api/scenarios": {
         get: {
           tags: ["Escenarios"],
@@ -840,7 +857,7 @@ export function buildOpenApiSpec(): Json {
           tags: ["Reportes"],
           summary: "Reporte de eventos de inscripción",
           description:
-            "Filtros por todos los campos del formulario y rango de fechas. `groupBy` permite agrupar por fecha, semana, mes, ACUDE, categoría, disciplina, escenario, franja, día, sexo, estado o docente.",
+            "Filtros por todos los campos del formulario y rango de fechas. `groupBy` permite agrupar por fecha, semana, mes, estudiante, ACUDE, categoría, disciplina, escenario, franja, día, sexo, estado o docente.",
           parameters: queryParams(reportQuerySchema),
           responses: {
             "200": { description: "Reporte", content: json(ref("ReportResult")) },

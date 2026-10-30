@@ -28,6 +28,7 @@ export async function getOccupation(
   requestedDate = todayKey(),
   day?: Weekday,
   now = new Date(),
+  teacherId?: string,
 ): Promise<OccupationResult> {
   const date = isDateKey(requestedDate) ? requestedDate : todayKey();
   const firestore = db();
@@ -41,10 +42,12 @@ export async function getOccupation(
     const data = doc.data();
     return isScenarioDocument(data) ? [{ id: doc.id, ...data } as Scenario] : [];
   });
-  const acudes = acudeSnap.docs.flatMap((doc) => {
-    const data = doc.data();
-    return isAcudeDocument(data) ? [{ id: doc.id, ...data } as Acude] : [];
-  });
+  const acudes = acudeSnap.docs
+    .flatMap((doc) => {
+      const data = doc.data();
+      return isAcudeDocument(data) ? [{ id: doc.id, ...data } as Acude] : [];
+    })
+    .filter((acude) => !teacherId || acude.teacherId === teacherId);
   const counts = new Map<string, number>();
   for (const doc of enrollmentSnap.docs) {
     const data = doc.data() as { acudeId: string; slotId: string };
@@ -104,6 +107,7 @@ export async function getOccupation(
       }
     }
     sessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    if (teacherId && sessions.length === 0) continue;
     const current = sessions.find((session) => session.phase === "in_session") ?? null;
     const next =
       sessions

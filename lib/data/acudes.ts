@@ -53,6 +53,7 @@ export function toAcude(id: string, data: AcudeDoc): Acude {
     requirements: data.requirements ?? "",
     attendanceMin: data.attendanceMin ?? 80,
     imageUrl: data.imageUrl ?? null,
+    imageStoragePath: data.imageStoragePath ?? null,
   };
 }
 
@@ -130,6 +131,7 @@ export async function listLiveAcudes(
     q?: string;
     category?: AcudeCategory;
     day?: string;
+    teacherId?: string;
     updatedSince?: string;
   } = {},
 ): Promise<LiveAcude[]> {
@@ -139,6 +141,7 @@ export async function listLiveAcudes(
       q: filter.q,
       category: filter.category,
       status: "published",
+      teacherId: filter.teacherId,
       updatedSince: filter.updatedSince,
     }),
     firestore.collection(ENROLLMENTS).where("status", "==", "active").get(),
@@ -274,6 +277,7 @@ function buildAcudeDoc(
     status: input.status,
     semester: input.semester,
     imageUrl: input.imageUrl ?? null,
+    imageStoragePath: previous?.imageStoragePath ?? null,
     requirements: input.requirements,
     attendanceMin: input.attendanceMin,
     createdBy: previous?.createdBy ?? user.uid,
@@ -422,6 +426,28 @@ export async function archiveAcude(id: string): Promise<Acude> {
     tx.set(ref, data);
     return toAcude(id, data);
   });
+}
+
+/** Guarda la URL y la ruta de la portada subida a Storage. */
+export async function updateAcudeImage(
+  id: string,
+  imageUrl: string,
+  imageStoragePath: string,
+): Promise<Acude> {
+  const ref = db().collection(ACUDES).doc(id);
+  const snap = await ref.get();
+  if (!snap.exists || !isAcudeDocument(snap.data())) {
+    throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+  }
+  const now = new Date().toISOString();
+  const data = {
+    ...(snap.data() as AcudeDoc),
+    imageUrl,
+    imageStoragePath,
+    updatedAt: now,
+  };
+  await ref.set(data, { merge: true });
+  return toAcude(id, data);
 }
 
 /** Datos de apoyo para formularios del panel: escenarios disponibles. */

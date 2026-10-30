@@ -50,6 +50,10 @@ export async function createEnrollment(
   if (user.role !== "student") {
     throw new ApiError(403, "FORBIDDEN", "Solo los estudiantes pueden inscribirse a un ACUDE");
   }
+  const sex = input.sex ?? user.sex;
+  if (!sex) {
+    throw new ApiError(400, "VALIDATION_ERROR", "Falta el sexo del estudiante en el perfil");
+  }
   const firestore = db();
   const enrollmentRef = firestore.collection(ENROLLMENTS).doc(`${user.uid}_${input.clientRequestId}`);
   const acudeRef = firestore.collection(ACUDES).doc(input.acudeId);
@@ -133,7 +137,7 @@ export async function createEnrollment(
       userId: user.uid,
       userEmail: user.email,
       userName: user.name,
-      userSex: input.sex,
+      userSex: sex,
       slotId: slot.id,
       day: slot.day,
       startTime: slot.startTime,
@@ -164,10 +168,10 @@ export async function createEnrollment(
     return { enrollment: toEnrollment(enrollmentRef.id, data), created: true };
   });
 
-  // El sexo del formulario se guarda también en el perfil (best effort: no rompe la inscripción).
-  if (result.created && user.sex !== input.sex) {
+  // El sexo se toma del perfil; solo se actualiza si el usuario lo cambió.
+  if (result.created && user.sex !== sex) {
     try {
-      await updateUserSex(user.uid, input.sex);
+      await updateUserSex(user.uid, sex);
     } catch (err) {
       console.warn("[enrollments] no se pudo actualizar el sexo del perfil:", err);
     }
@@ -187,8 +191,10 @@ export async function cancelEnrollment(
     if (!snap.exists) throw new ApiError(404, "NOT_FOUND", "Inscripción no encontrada");
     const enrollment = toEnrollment(snap.id, snap.data() as EnrollmentDoc);
     const isOwner = enrollment.userId === actor.uid;
-    const isStaff = actor.role === "manager" || actor.role === "admin";
-    if (!isOwner && !isStaff) {
+    const canManage =
+      actor.role === "admin" ||
+      (actor.role === "manager" && enrollment.teacherId === actor.uid);
+    if (!isOwner && !canManage) {
       // No se revela la existencia de inscripciones ajenas.
       throw new ApiError(404, "NOT_FOUND", "Inscripción no encontrada");
     }
@@ -232,6 +238,7 @@ export async function cancelEnrollment(
 export interface EnrollmentFilter {
   status?: EnrollmentStatus;
   acudeId?: string;
+  teacherId?: string;
   slotId?: string;
   updatedSince?: string;
   from?: string;
@@ -246,6 +253,7 @@ export async function listEnrollments(filter: EnrollmentFilter = {}): Promise<En
   const snap = await query.get();
   let items = snap.docs.map((doc) => toEnrollment(doc.id, doc.data() as EnrollmentDoc));
   if (filter.acudeId) items = items.filter((item) => item.acudeId === filter.acudeId);
+  if (filter.teacherId) items = items.filter((item) => item.teacherId === filter.teacherId);
   if (filter.userId) items = items.filter((item) => item.userId === filter.userId);
   if (filter.status) items = items.filter((item) => item.status === filter.status);
   if (filter.slotId) items = items.filter((item) => item.slotId === filter.slotId);

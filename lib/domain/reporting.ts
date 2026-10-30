@@ -6,6 +6,7 @@ import {
   SEX_LABELS,
   WEEKDAY_LABELS,
 } from "../labels";
+import { normalizeText } from "../text";
 import type {
   AcudeCategory,
   AttendanceRecord,
@@ -34,6 +35,8 @@ export interface ReportFilters {
   status?: EnrollmentStatus | AttendanceStatus;
   teacherId?: string;
   userId?: string;
+  /** Búsqueda por nombre o correo del estudiante. */
+  student?: string;
 }
 
 const EMPTY_SUMMARY: Omit<ReportSummary, "total"> = {
@@ -41,8 +44,6 @@ const EMPTY_SUMMARY: Omit<ReportSummary, "total"> = {
   canceled: 0,
   present: 0,
   absent: 0,
-  late: 0,
-  excused: 0,
   attendanceRate: 0,
 };
 
@@ -83,6 +84,8 @@ function enrollmentGroupKey(item: Enrollment, groupBy: ReportGroupBy): string {
       return isoWeekKey(item.enrolledOn ?? item.enrolledAt.slice(0, 10));
     case "month":
       return (item.enrolledOn ?? item.enrolledAt).slice(0, 7);
+    case "student":
+      return item.userId;
     case "acude":
       return item.acudeName;
     case "category":
@@ -112,6 +115,8 @@ function attendanceGroupKey(item: AttendanceRecord, groupBy: ReportGroupBy): str
       return isoWeekKey(item.date);
     case "month":
       return item.date.slice(0, 7);
+    case "student":
+      return item.userId;
     case "acude":
       return item.acudeName;
     case "category":
@@ -153,6 +158,10 @@ export function filterEnrollments(items: Enrollment[], filters: ReportFilters): 
     if (filters.status && item.status !== filters.status) return false;
     if (filters.teacherId && item.teacherId !== filters.teacherId) return false;
     if (filters.userId && item.userId !== filters.userId) return false;
+    if (filters.student) {
+      const term = normalizeText(filters.student);
+      if (!normalizeText(`${item.userName} ${item.userEmail}`).includes(term)) return false;
+    }
     return true;
   });
 }
@@ -170,6 +179,10 @@ export function filterAttendance(items: AttendanceRecord[], filters: ReportFilte
     if (filters.status && item.status !== filters.status) return false;
     if (filters.teacherId && item.teacherId !== filters.teacherId) return false;
     if (filters.userId && item.userId !== filters.userId) return false;
+    if (filters.student) {
+      const term = normalizeText(filters.student);
+      if (!normalizeText(`${item.userName} ${item.userEmail}`).includes(term)) return false;
+    }
     return true;
   });
 }
@@ -187,7 +200,7 @@ export function buildEnrollmentReport(
 
   for (const item of items) {
     const key = enrollmentGroupKey(item, groupBy);
-    labels.set(key, pointLabel(key, groupBy));
+    labels.set(key, groupBy === "student" ? item.userName : pointLabel(key, groupBy));
     const target = item.status === "active" ? active : canceled;
     target.set(key, (target.get(key) ?? 0) + 1);
   }
@@ -200,7 +213,7 @@ export function buildEnrollmentReport(
   };
 
   const series: ReportSeries[] = [
-    { name: "Activas", color: "#0f766e", points: [] },
+    { name: "Activas", color: "#00652e", points: [] },
     { name: "Canceladas", color: "#e11d48", points: [] },
   ].map((definition) => {
     const values = definition.name === "Activas" ? active : canceled;
@@ -236,12 +249,10 @@ export function buildAttendanceReport(
   now: Date = new Date(),
 ): ReportResult {
   const items = filterAttendance(raw, filters);
-  const statuses: AttendanceStatus[] = ["present", "late", "absent", "excused"];
+  const statuses: AttendanceStatus[] = ["present", "absent"];
   const colors: Record<AttendanceStatus, string> = {
-    present: "#0f766e",
-    late: "#d97706",
+    present: "#00652e",
     absent: "#e11d48",
-    excused: "#2563eb",
   };
   const maps = new Map<AttendanceStatus, Map<string, number>>(
     statuses.map((status) => [status, new Map()]),
@@ -249,14 +260,12 @@ export function buildAttendanceReport(
   const labels = new Map<string, string>();
   for (const item of items) {
     const key = attendanceGroupKey(item, groupBy);
-    labels.set(key, pointLabel(key, groupBy));
+    labels.set(key, groupBy === "student" ? item.userName : pointLabel(key, groupBy));
     const target = maps.get(item.status)!;
     target.set(key, (target.get(key) ?? 0) + 1);
   }
   const present = items.filter((item) => item.status === "present").length;
-  const late = items.filter((item) => item.status === "late").length;
   const absent = items.filter((item) => item.status === "absent").length;
-  const excused = items.filter((item) => item.status === "excused").length;
   const total = items.length;
 
   const series: ReportSeries[] = statuses.map((status) => ({
@@ -282,10 +291,8 @@ export function buildAttendanceReport(
       ...EMPTY_SUMMARY,
       total,
       present,
-      late,
       absent,
-      excused,
-      attendanceRate: total > 0 ? Math.round(((present + late) / total) * 100) : 0,
+      attendanceRate: total > 0 ? Math.round((present / total) * 100) : 0,
     },
     generatedAt: now.toISOString(),
     serverTime: now.toISOString(),

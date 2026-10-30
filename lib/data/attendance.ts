@@ -1,7 +1,13 @@
 import "server-only";
 import { db } from "../firebase";
 import { ApiError } from "../errors";
-import type { Acude, AttendanceRecord, AuthUser, Enrollment } from "../types";
+import type {
+  Acude,
+  AttendanceRecord,
+  AttendanceStatus,
+  AuthUser,
+  Enrollment,
+} from "../types";
 import type { SaveAttendanceInput } from "../schemas";
 import { ACUDES } from "./acudes";
 import { listActiveEnrollments } from "./enrollments";
@@ -10,8 +16,19 @@ export const ATTENDANCE = "attendance";
 
 type AttendanceDoc = Omit<AttendanceRecord, "id">;
 
+/** Compatibilidad con registros antiguos: tarde = asistió; excusa = no asistió. */
+export function normalizeAttendanceStatus(value: unknown): AttendanceStatus {
+  return value === "present" || value === "late" ? "present" : "absent";
+}
+
 export function toAttendance(id: string, data: AttendanceDoc): AttendanceRecord {
-  return { id, ...data, notes: data.notes ?? "" };
+  return {
+    id,
+    ...data,
+    status: normalizeAttendanceStatus(data.status),
+    userEmail: data.userEmail ?? "",
+    notes: data.notes ?? "",
+  };
 }
 
 /**
@@ -30,6 +47,9 @@ export async function saveAttendance(
     id: acudeSnap.id,
     ...(acudeSnap.data() as Omit<Acude, "id">),
   } as Acude;
+  if (user.role === "manager" && acude.teacherId !== user.uid) {
+    throw new ApiError(403, "FORBIDDEN", "Solo puedes registrar asistencia de tus ACUDES");
+  }
   const slot = acude.schedule.find((item) => item.id === input.slotId);
   if (!slot) throw new ApiError(404, "NOT_FOUND", "La franja horaria no existe en este ACUDE");
 
@@ -63,6 +83,7 @@ export async function saveAttendance(
       enrollmentId: enrollment.id,
       userId: enrollment.userId,
       userName: enrollment.userName,
+      userEmail: enrollment.userEmail,
       userSex: enrollment.userSex,
       category: acude.category,
       discipline: acude.discipline,
@@ -89,11 +110,12 @@ export async function saveAttendance(
 
 export interface AttendanceFilter {
   acudeId?: string;
+  teacherId?: string;
   slotId?: string;
   date?: string;
   from?: string;
   to?: string;
-  status?: string;
+  status?: AttendanceStatus;
   updatedSince?: string;
 }
 
@@ -103,6 +125,7 @@ export async function listAttendance(filter: AttendanceFilter = {}): Promise<Att
   const snap = await query.get();
   let items = snap.docs.map((doc) => toAttendance(doc.id, doc.data() as AttendanceDoc));
   if (filter.acudeId) items = items.filter((item) => item.acudeId === filter.acudeId);
+  if (filter.teacherId) items = items.filter((item) => item.teacherId === filter.teacherId);
   if (filter.slotId) items = items.filter((item) => item.slotId === filter.slotId);
   if (filter.date) items = items.filter((item) => item.date === filter.date);
   if (filter.from) items = items.filter((item) => item.date >= filter.from!);

@@ -26,6 +26,7 @@ function filtersOf(query: ReportQuery): ReportFilters {
     status: query.status,
     teacherId: query.teacherId,
     userId: query.userId,
+    student: query.student,
   };
 }
 

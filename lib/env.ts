@@ -7,6 +7,8 @@ const envSchema = z.object({
   FIREBASE_PRIVATE_KEY: z.string().min(1),
   /** Web API Key del proyecto (para la API REST de Firebase Authentication). */
   FIREBASE_WEB_API_KEY: z.string().min(1),
+  /** Bucket de Firebase Storage. Opcional: se infiere del proyecto. */
+  FIREBASE_STORAGE_BUCKET: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

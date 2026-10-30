@@ -9,9 +9,12 @@ import { liveQuerySchema } from "@/lib/schemas";
  * `serverTime` se toma ANTES de consultar: es el cursor de la próxima sincronización.
  */
 export const GET = route(async (request) => {
-  await requireUser(request);
+  const user = await requireUser(request);
   const filter = parseQuery(request, liveQuerySchema);
   const serverTime = serverTimeNow();
-  const acudes = await listLiveAcudes(filter);
+  const acudes = await listLiveAcudes({
+    ...filter,
+    ...(user.role === "manager" ? { teacherId: user.uid } : {}),
+  });
   return Response.json({ acudes, serverTime });
 });

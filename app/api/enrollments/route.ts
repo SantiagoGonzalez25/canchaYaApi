@@ -9,7 +9,11 @@ export const GET = route(async (request) => {
   requireStaff(user);
   const filter = parseQuery(request, enrollmentQuerySchema);
   const serverTime = serverTimeNow();
-  return Response.json({ enrollments: await listEnrollments(filter), serverTime });
+  const enrollments = await listEnrollments({
+    ...filter,
+    ...(user.role === "manager" ? { teacherId: user.uid } : {}),
+  });
+  return Response.json({ enrollments, serverTime });
 });
 
 /**

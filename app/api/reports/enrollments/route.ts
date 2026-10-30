@@ -13,5 +13,6 @@ export const GET = route(async (request) => {
   const user = await requireUser(request);
   requireStaff(user);
   const query = parseQuery(request, reportQuerySchema);
+  if (user.role === "manager") query.teacherId = user.uid;
   return Response.json(await enrollmentReport(query));
 });

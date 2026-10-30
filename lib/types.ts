@@ -119,6 +119,7 @@ export interface Acude {
   status: AcudeStatus;
   semester: string;
   imageUrl: string | null;
+  imageStoragePath: string | null;
   requirements: string;
   attendanceMin: number;
   createdBy: string | null;
@@ -180,7 +181,7 @@ export interface Enrollment {
 
 // ───────────────────────────── Asistencia ─────────────────────────────
 
-export type AttendanceStatus = "present" | "absent" | "late" | "excused";
+export type AttendanceStatus = "present" | "absent";
 
 export interface AttendanceRecord {
   id: string;
@@ -190,6 +191,7 @@ export interface AttendanceRecord {
   enrollmentId: string;
   userId: string;
   userName: string;
+  userEmail: string;
   userSex: Sex;
   category: AcudeCategory;
   discipline: string;
@@ -244,6 +246,7 @@ export type ReportGroupBy =
   | "date"
   | "week"
   | "month"
+  | "student"
   | "acude"
   | "category"
   | "discipline"
@@ -272,9 +275,7 @@ export interface ReportSummary {
   canceled: number;
   present: number;
   absent: number;
-  late: number;
-  excused: number;
-  /** Porcentaje de asistencia efectiva (present + late) sobre los registros. */
+  /** Porcentaje de asistencia sobre los registros. */
   attendanceRate: number;
 }
 

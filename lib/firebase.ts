@@ -2,6 +2,7 @@ import "server-only";
 import { cert, getApp, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 import { getEnv } from "./env";
 
 function adminApp(): App {
@@ -18,3 +19,10 @@ function adminApp(): App {
 
 export const adminAuth = () => getAuth(adminApp());
 export const db = () => getFirestore(adminApp());
+
+export const storageBucket = () => {
+  const env = getEnv();
+  const name =
+    env.FIREBASE_STORAGE_BUCKET ?? `${env.FIREBASE_PROJECT_ID}.firebasestorage.app`;
+  return getStorage(adminApp()).bucket(name);
+};

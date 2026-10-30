@@ -13,6 +13,11 @@ export const GET = route(async (request) => {
   requireStaff(user);
   const { date, day } = parseQuery(request, occupationQuerySchema);
   const serverTime = new Date().toISOString();
-  const occupation = await getOccupation(date, day);
+  const occupation = await getOccupation(
+    date,
+    day,
+    new Date(),
+    user.role === "manager" ? user.uid : undefined,
+  );
   return Response.json({ ...occupation, serverTime });
 });

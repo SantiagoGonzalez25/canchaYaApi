@@ -1,25 +1,28 @@
 import { createAcude, listAcudes } from "@/lib/data/acudes";
-import { requireUser, requireStaff } from "@/lib/guard";
+import { requireAdmin, requireUser } from "@/lib/guard";
 import { parseBody, parseQuery, route, serverTimeNow } from "@/lib/http";
 import { acudeQuerySchema, acudeSchema } from "@/lib/schemas";
 
 /**
  * GET /api/acudes?status=&category=&discipline=&q=&updatedSince=
- * Catálogo de gestión (borradores incluidos). Para estudiantes existe /api/acudes/live.
+ * Catálogo de gestión. El gestor solo ve los ACUDES que tiene asignados.
  */
 export const GET = route(async (request) => {
   const user = await requireUser(request);
-  requireStaff(user);
+  if (user.role === "student") {
+    requireAdmin(user);
+  }
   const filter = parseQuery(request, acudeQuerySchema);
+  if (user.role === "manager") filter.teacherId = user.uid;
   const serverTime = serverTimeNow();
   const acudes = await listAcudes(filter);
   return Response.json({ acudes, serverTime });
 });
 
-/** POST /api/acudes — crea un grupo y bloquea cruces de escenario/docente. */
+/** POST /api/acudes — solo el administrador crea grupos. */
 export const POST = route(async (request) => {
   const user = await requireUser(request);
-  requireStaff(user);
+  requireAdmin(user);
   const input = await parseBody(request, acudeSchema);
   const acude = await createAcude(input, user);
   return Response.json({ acude, serverTime: new Date().toISOString() }, { status: 201 });

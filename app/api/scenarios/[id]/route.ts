@@ -1,5 +1,5 @@
 import { deleteScenario, getScenario, updateScenario } from "@/lib/data/scenarios";
-import { requireUser, requireStaff } from "@/lib/guard";
+import { requireAdmin, requireUser } from "@/lib/guard";
 import { parseBody, route } from "@/lib/http";
 import { scenarioSchema } from "@/lib/schemas";
 
@@ -11,7 +11,7 @@ export const GET = route(async (request, ctx: { params: Promise<{ id: string }> 
 
 export const PUT = route(async (request, ctx: { params: Promise<{ id: string }> }) => {
   const user = await requireUser(request);
-  requireStaff(user);
+  requireAdmin(user);
   const { id } = await ctx.params;
   const input = await parseBody(request, scenarioSchema);
   return Response.json({
@@ -22,7 +22,7 @@ export const PUT = route(async (request, ctx: { params: Promise<{ id: string }> 
 
 export const DELETE = route(async (request, ctx: { params: Promise<{ id: string }> }) => {
   const user = await requireUser(request);
-  requireStaff(user);
+  requireAdmin(user);
   const { id } = await ctx.params;
   await deleteScenario(id);
   return Response.json({ deleted: true, serverTime: new Date().toISOString() });

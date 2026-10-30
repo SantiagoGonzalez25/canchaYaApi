@@ -45,3 +45,7 @@ export function isStaff(user: AuthUser): boolean {
 export function requireStaff(user: AuthUser): void {
   assertRole(user, ["manager", "admin"]);
 }
+
+export function requireAdmin(user: AuthUser): void {
+  assertRole(user, "admin");
+}

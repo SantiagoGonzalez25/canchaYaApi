@@ -66,3 +66,8 @@ export async function requirePageStaff(): Promise<AuthUser> {
   await connection();
   return requireWebUser(["manager", "admin"]);
 }
+
+export async function requirePageAdmin(): Promise<AuthUser> {
+  await connection();
+  return requireWebUser("admin");
+}

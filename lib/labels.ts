@@ -18,7 +18,7 @@ import type {
 
 export const ROLE_LABELS: Record<Role, string> = {
   student: "Estudiante",
-  manager: "Gestor de ACUDES",
+  manager: "Profesor",
   admin: "Administrador",
 };
 
@@ -78,10 +78,10 @@ export const CATEGORY_LABELS: Record<AcudeCategory, string> = {
 };
 
 export const CATEGORY_COLORS: Record<AcudeCategory, string> = {
-  sports: "#0f766e",
-  cultural: "#7c3aed",
-  training: "#2563eb",
-  recreational: "#d97706",
+  sports: "#00652e",
+  cultural: "#45a78f",
+  training: "#1d4851",
+  recreational: "#7aa51d",
 };
 
 export const ACUDE_STATUS_LABELS: Record<AcudeStatus, string> = {
@@ -114,14 +114,13 @@ export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
 export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
   present: "Asistió",
   absent: "No asistió",
-  late: "Llegó tarde",
-  excused: "Excusa",
 };
 
 export const REPORT_GROUP_LABELS: Record<ReportGroupBy, string> = {
   date: "Fecha",
   week: "Semana",
   month: "Mes",
+  student: "Estudiante",
   acude: "ACUDE",
   category: "Categoría",
   discipline: "Disciplina",
@@ -174,6 +173,20 @@ export function formatDateKey(value: Date | string): string {
     day: "2-digit",
     timeZone: TIMEZONE,
   }).format(value);
+}
+
+/** Formato numérico para títulos de asistencia: 29/10/2026. */
+export function formatDateNumeric(value: string): string {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T12:00:00-05:00`)
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("es-CO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: TIMEZONE,
+  });
 }
 
 export function weekdayOf(dateKey: string): Weekday {

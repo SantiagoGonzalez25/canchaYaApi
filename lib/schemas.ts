@@ -56,7 +56,6 @@ export const registerSchema = z.object({
   displayName: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(80),
   sex: sexSchema,
   phone: optionalText(30),
-  documentId: optionalText(30),
 });
 
 export const managerRegisterSchema = z.object({
@@ -65,7 +64,6 @@ export const managerRegisterSchema = z.object({
   displayName: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(80),
   sex: sexSchema,
   phone: optionalText(30),
-  documentId: optionalText(30),
 });
 
 export const refreshSchema = z.object({
@@ -134,7 +132,15 @@ export const acudeSchema = z
       .regex(/^\d{4}-[12]$/, "El semestre debe tener el formato AAAA-1 o AAAA-2"),
     imageUrl: z.preprocess(
       (value) => (value === "" || value === null ? undefined : value),
-      z.url("La imagen debe ser una URL válida").max(500).optional(),
+      z
+        .string()
+        .trim()
+        .max(500)
+        .refine(
+          (value) => value.startsWith("/") || /^https?:\/\//i.test(value),
+          "La imagen debe ser una ruta interna o una URL http(s) válida",
+        )
+        .optional(),
     ),
     requirements: z.string().trim().max(800).default(""),
     attendanceMin: z.coerce.number().int().min(0).max(100).default(80),
@@ -163,7 +169,7 @@ export const acudeSchema = z
     if (!acude.schedule.some((slot) => slot.scenarioId === acude.scenarioId)) {
       ctx.addIssue({
         code: "custom",
-        message: "El escenario principal debe aparecer en al menos una franja",
+        message: "Selecciona el escenario principal también en una de las franjas",
         path: ["scenarioId"],
       });
     }
@@ -195,7 +201,7 @@ export const createEnrollmentSchema = z.object({
     .min(8, "clientRequestId debe tener al menos 8 caracteres")
     .max(100)
     .regex(/^[A-Za-z0-9_-]+$/, "Formato de clientRequestId inválido"),
-  sex: sexSchema,
+  sex: sexSchema.optional(),
 });
 
 export const enrollmentQuerySchema = z.object({
@@ -211,7 +217,7 @@ export const enrollmentQuerySchema = z.object({
 
 export const attendanceEntrySchema = z.object({
   enrollmentId: idField,
-  status: z.enum(["present", "absent", "late", "excused"]),
+  status: z.enum(["present", "absent"]),
   notes: z.string().trim().max(300).default(""),
 });
 
@@ -228,7 +234,7 @@ export const attendanceQuerySchema = z.object({
   date: optionalDate,
   from: optionalDate,
   to: optionalDate,
-  status: z.enum(["present", "absent", "late", "excused"]).optional(),
+  status: z.enum(["present", "absent"]).optional(),
   updatedSince: z.iso.datetime().optional(),
 });
 
@@ -250,16 +256,16 @@ export const reportQuerySchema = z.object({
   scenarioId: idField.optional(),
   day: weekdayEnum.optional(),
   sex: sexSchema.optional(),
-  status: z
-    .enum(["active", "canceled", "present", "absent", "late", "excused"])
-    .optional(),
+  status: z.enum(["active", "canceled", "present", "absent"]).optional(),
   teacherId: idField.optional(),
   userId: idField.optional(),
+  student: z.string().trim().max(120).optional(),
   groupBy: z
     .enum([
       "date",
       "week",
       "month",
+      "student",
       "acude",
       "category",
       "discipline",
