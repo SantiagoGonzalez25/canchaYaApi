@@ -26,6 +26,7 @@ function enrollment(overrides: Partial<Enrollment>): Enrollment {
     teacherName: "Carlos",
     status: "active",
     clientRequestId: "abcdefgh",
+    semester: "2026-2",
     enrolledAt: "2026-10-10T15:00:00.000Z",
     enrolledOn: "2026-10-10",
     canceledAt: null,

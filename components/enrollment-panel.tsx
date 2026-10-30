@@ -68,8 +68,8 @@ export function EnrollmentPanel({
       <div>
         <p className="text-sm font-bold text-slate-900">Elige tu subgrupo</p>
         <p className="text-xs text-slate-500">
-          Cada franja tiene cupo independiente. Los cruces con tus otros ACUDES se validan en el
-          servidor.
+          Cada franja tiene cupo independiente. Recuerda que puedes tener máximo 2 ACUDES por
+          semestre; los cruces con tus otros ACUDES se validan en el servidor.
         </p>
       </div>
 

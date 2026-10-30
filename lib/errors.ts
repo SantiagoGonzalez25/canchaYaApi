@@ -10,6 +10,7 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "EMAIL_IN_USE"
   | "ALREADY_ENROLLED"
+  | "MAX_ACUDES"
   | "NO_CAPACITY"
   | "SCHEDULE_CONFLICT"
   | "STUDENT_OVERLAP"

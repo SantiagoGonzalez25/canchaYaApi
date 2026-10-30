@@ -3,6 +3,7 @@ import { db } from "../firebase";
 import { ApiError } from "../errors";
 import { formatDateKey } from "../labels";
 import { isStudentOverlap, slotCapacity } from "../domain/schedule";
+import { assertSemesterLimit } from "../domain/enrollment-rules";
 import { updateUserSex } from "../services/auth";
 import type {
   Acude,
@@ -122,6 +123,7 @@ export async function createEnrollment(
         "Ya estás inscrito en este ACUDE o en otro grupo que se cruza en el mismo horario",
       );
     }
+    assertSemesterLimit(conflicts, acude.semester);
 
     const scenarioSnap = await tx.get(
       firestore.collection("scenarios").doc(slot.scenarioId),
@@ -150,6 +152,7 @@ export async function createEnrollment(
       teacherName: acude.teacherName,
       status: "active",
       clientRequestId: input.clientRequestId,
+      semester: acude.semester,
       enrolledAt: now,
       enrolledOn: formatDateKey(now),
       canceledAt: null,

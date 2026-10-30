@@ -577,6 +577,7 @@ async function seedDemoEnrollments(users: Map<string, { uid: string; user: DemoU
       teacherName: acude.teacherName,
       status: item.status,
       clientRequestId: `seed-${acude.id}-${slot.id}`,
+      semester: SEMESTER,
       enrolledAt,
       enrolledOn: dateKey(new Date(enrolledAt)),
       canceledAt:

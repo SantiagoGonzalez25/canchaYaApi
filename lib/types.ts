@@ -172,6 +172,7 @@ export interface Enrollment {
   teacherName: string;
   status: EnrollmentStatus;
   clientRequestId: string;
+  semester: string;
   enrolledAt: string;
   /** Fecha local (America/Bogota) de la inscripción, YYYY-MM-DD. Facilita reportes. */
   enrolledOn: string;
@@ -263,6 +264,20 @@ export interface ReportPoint {
   value: number;
 }
 
+export interface ReportRow {
+  date: string;
+  student: string;
+  email: string;
+  sex: string;
+  acude: string;
+  slot: string;
+  scenario: string;
+  teacher: string;
+  category: string;
+  discipline: string;
+  status: string;
+}
+
 export interface ReportSeries {
   name: string;
   color?: string;
@@ -285,6 +300,7 @@ export interface ReportResult {
   from: string;
   to: string;
   series: ReportSeries[];
+  rows: ReportRow[];
   summary: ReportSummary;
   generatedAt: string;
   serverTime: string;

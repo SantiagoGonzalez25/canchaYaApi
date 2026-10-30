@@ -63,6 +63,7 @@ export function findScheduleConflicts(
           });
         }
         if (candidate.teacherId === other.teacherId) {
+          if (candidate.teacherId === "pending") continue;
           conflicts.push({
             type: "teacher",
             acudeId: other.id,
