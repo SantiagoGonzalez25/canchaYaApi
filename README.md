@@ -73,7 +73,7 @@ El profesor demo tiene asignado el ACUDE **Fútbol sala formativo**.
 
 ## Roles
 
-- **student**: cartelera, calendario (inicia en “Mis ACUDES”), inscripción, ajustes, cancelación y “Mis ACUDES”.
+- **student**: cartelera, calendario (inicia en “Mis ACUDES” y solo muestra su franja inscrita), inscripción, ajustes, cancelación y “Mis ACUDES”. Máximo 2 ACUDES por semestre.
 - **manager** (profesor): solo ve el ACUDE asignado, su asistencia y sus reportes. No crea ACUDES ni escenarios.
 - **admin**: crea ACUDES, profesores, asigna horarios, sube imágenes y ve toda la información.
 
@@ -135,7 +135,7 @@ Todos los errores tienen la forma:
 - **Calendario semanal** con navegación por semanas, salto a fecha, filtros por categoría/disponibilidad/mis ACUDES, vista agenda, detalle en modal, inscripción y línea de ocupación. En móvil el grid se desplaza horizontalmente.
 - **Cartelera digital** con búsqueda, filtros y detalle por subgrupo.
 - **Mis ACUDES** con cancelación inmediata.
-- **Panel de ocupación** con estado en vivo por escenario (en curso, próxima, finalizada) y barra de ocupación.
+- **Panel de ocupación** con estado por sesión (en clase ahora, próxima, ya pasó hoy), barra de ocupación y fichas seleccionables.
 - **Gestión de ACUDES** con editor dinámico de franjas y validación de cruces en el servidor.
 - **Asistencia** con nombre, correo institucional y dos estados: asistió / no asistió. Sin valores por defecto y con guardado bloqueado hasta completar la lista.
 - **Reportes Highcharts** de eventos de inscripción y asistencia, filtrables por fechas, nombre/correo, ACUDE y demás campos, con agrupación por estudiante y exportación CSV.
