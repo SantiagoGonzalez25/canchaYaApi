@@ -28,6 +28,7 @@ interface CalendarProps {
   userSex: Sex | null;
   myEnrollments: Enrollment[];
   isStudent: boolean;
+  canManage: boolean;
 }
 
 interface CalendarEvent {
@@ -61,18 +62,34 @@ function eventStyle(category: LiveAcude["category"]): React.CSSProperties {
 
 const MOBILE_QUERY = "(max-width: 767px)";
 function subscribeMobile(callback: () => void) {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return () => {};
+  }
   const query = window.matchMedia(MOBILE_QUERY);
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
+  if (typeof query.addEventListener === "function") {
+    query.addEventListener("change", callback);
+    return () => query.removeEventListener("change", callback);
+  }
+  query.addListener(callback);
+  return () => query.removeListener(callback);
 }
 function mobileSnapshot() {
-  return window.matchMedia(MOBILE_QUERY).matches;
+  return typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia(MOBILE_QUERY).matches
+    : false;
 }
 function serverMobileSnapshot() {
   return false;
 }
 
-export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: CalendarProps) {
+export function Calendar({
+  acudes,
+  today,
+  userSex,
+  myEnrollments,
+  isStudent,
+  canManage,
+}: CalendarProps) {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
   const [viewChoice, setViewChoice] = useState<"week" | "agenda" | null>(null);
   const isMobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, serverMobileSnapshot);
@@ -526,7 +543,7 @@ export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: C
                   <Link href={`/acudes/${selectedAcude.id}`} className={secondaryButtonClass}>
                     Ver ficha completa
                   </Link>
-                  {!isStudent && (
+                  {canManage && (
                     <Link href={`/manager/acudes/${selectedAcude.id}`} className={buttonClass}>
                       Editar ACUDE
                     </Link>

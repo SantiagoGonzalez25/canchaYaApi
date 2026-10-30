@@ -32,7 +32,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Sexo" hint="Se guarda en tu perfil y en cada inscripción.">
+            <Field label="Sexo">
               <select name="sex" required defaultValue="" className={selectClass}>
                 <option value="" disabled>
                   Selecciona...
@@ -68,10 +68,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           placeholder="nombre@correo.edu.co"
         />
       </Field>
-      <Field
-        label="Contraseña"
-        hint={isLogin ? undefined : "Mínimo 6 caracteres (requisito de Firebase)."}
-      >
+      <Field label="Contraseña">
         <div className="relative">
           <input
             name="password"

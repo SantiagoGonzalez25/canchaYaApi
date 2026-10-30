@@ -22,11 +22,7 @@ export default function RegisterPage() {
         </Suspense>
         <div className="mb-6">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700">CanchaYa</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Crear cuenta de estudiante</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            El registro público siempre crea estudiantes. Los perfiles de gestor los crea un
-            administrador.
-          </p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">Crear cuenta</h1>
         </div>
         <AuthForm mode="register" />
       </div>
