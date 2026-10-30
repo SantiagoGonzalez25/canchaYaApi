@@ -116,6 +116,7 @@ export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: C
     const list: CalendarEvent[] = [];
     for (const acude of filtered) {
       for (const slot of acude.schedule) {
+        if (isStudent && onlyMine && !enrolledSlotIds.has(slot.id)) continue;
         const dayIndex = days.findIndex((date) => weekdayOf(date) === slot.day);
         if (dayIndex === -1) continue;
         const date = days[dayIndex];
@@ -125,7 +126,7 @@ export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: C
     return list.sort(
       (a, b) => a.date.localeCompare(b.date) || a.slot.startTime.localeCompare(b.slot.startTime),
     );
-  }, [filtered, days]);
+  }, [filtered, days, isStudent, onlyMine, enrolledSlotIds]);
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -195,6 +196,7 @@ export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: C
               {shortDate(weekStart)} — {shortDate(weekEnd)}
             </p>
             <p className="text-[11px] uppercase tracking-wide text-teal-700">Semana seleccionada</p>
+            <p className="text-[10px] text-slate-400">La programación se repite cada semana</p>
           </div>
           <div className="flex rounded-xl border border-slate-200 p-1">
             <button
@@ -448,7 +450,9 @@ export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: C
           })}
           {events.length === 0 && (
             <p className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
-              No hay franjas para los filtros seleccionados.
+              {isStudent && onlyMine && myEnrollments.length === 0
+                ? "Aún no tienes ACUDES inscritos. Desmarca “Mis ACUDES” para ver toda la cartelera."
+                : "No hay franjas para los filtros seleccionados."}
             </p>
           )}
         </div>

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { logoutAction } from "@/app/actions";
 import { ROLE_LABELS } from "@/lib/labels";
 import { getWebUser } from "@/lib/web/session";
+import { NavLink } from "./nav-link";
 import { secondaryButtonClass } from "./ui";
 
 interface NavItem {
@@ -24,7 +25,7 @@ function navItems(role: "student" | "manager" | "admin"): NavItem[] {
     { href: "/calendar", label: "Calendario" },
     { href: "/manager/occupation", label: "Ocupación" },
     { href: "/manager/acudes", label: role === "manager" ? "Mi ACUDE" : "ACUDES" },
-    { href: "/manager/scenarios", label: "Escenarios" },
+    ...(role === "admin" ? [{ href: "/manager/scenarios", label: "Escenarios" }] : []),
     { href: "/manager/attendance", label: "Asistencia" },
     { href: "/manager/reports", label: "Reportes" },
     ...(role === "admin" ? [{ href: "/manager/users", label: "Profesores" }] : []),
@@ -61,13 +62,13 @@ export async function Header() {
         {user && (
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
             {items.map((item) => (
-              <Link
+              <NavLink
                 key={item.href}
                 href={item.href}
+                label={item.label}
                 className="rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:bg-teal-50 hover:text-teal-800"
-              >
-                {item.label}
-              </Link>
+                activeClassName="bg-teal-50 text-teal-800"
+              />
             ))}
           </nav>
         )}
@@ -92,13 +93,13 @@ export async function Header() {
                     <p className="text-xs text-teal-700">{ROLE_LABELS[user.role]}</p>
                   </div>
                   {items.map((item) => (
-                    <Link
+                    <NavLink
                       key={item.href}
                       href={item.href}
+                      label={item.label}
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-teal-50 hover:text-teal-800"
-                    >
-                      {item.label}
-                    </Link>
+                      activeClassName="bg-teal-50 text-teal-800"
+                    />
                   ))}
                   <form action={logoutAction}>
                     <button className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-700 hover:bg-rose-50">

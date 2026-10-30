@@ -18,7 +18,7 @@ import {
   SCENARIO_TYPE_LABELS,
   formatDate,
 } from "@/lib/labels";
-import { requirePageStaff } from "@/lib/web/session";
+import { requirePageAdmin } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Escenarios" };
 
@@ -30,7 +30,7 @@ async function ScenarioManager({
 }: {
   searchParams: PageProps<"/manager/scenarios">["searchParams"];
 }) {
-  const user = await requirePageStaff();
+  const user = await requirePageAdmin();
   const isAdmin = user.role === "admin";
   const params = await searchParams;
   const scenarios = await listScenarios();

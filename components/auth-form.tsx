@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { loginAction, registerAction, type FormState } from "@/app/actions";
 import { SEX_LABELS } from "@/lib/labels";
 import { Alert, buttonClass, Field, inputClass, selectClass } from "./ui";
@@ -13,6 +13,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     mode === "login" ? loginAction : registerAction,
     initial,
   );
+  const [showPassword, setShowPassword] = useState(false);
   const isLogin = mode === "login";
 
   return (
@@ -71,16 +72,26 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         label="Contraseña"
         hint={isLogin ? undefined : "Mínimo 6 caracteres (requisito de Firebase)."}
       >
-        <input
-          name="password"
-          type="password"
-          required
-          minLength={isLogin ? 1 : 6}
-          maxLength={72}
-          autoComplete={isLogin ? "current-password" : "new-password"}
-          className={inputClass}
-          placeholder="••••••••"
-        />
+        <div className="relative">
+          <input
+            name="password"
+            type={showPassword ? "text" : "password"}
+            required
+            minLength={isLogin ? 1 : 6}
+            maxLength={72}
+            autoComplete={isLogin ? "current-password" : "new-password"}
+            className={`${inputClass} pr-20`}
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-50"
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showPassword ? "Ocultar" : "Mostrar"}
+          </button>
+        </div>
       </Field>
 
       {state.error && <Alert kind="error">{state.error}</Alert>}

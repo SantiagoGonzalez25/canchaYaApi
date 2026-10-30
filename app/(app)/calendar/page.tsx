@@ -5,7 +5,7 @@ import { Calendar } from "@/components/calendar";
 import { buttonClass, PageHeader, secondaryButtonClass } from "@/components/ui";
 import { listLiveAcudes } from "@/lib/data/acudes";
 import { listMyEnrollments } from "@/lib/data/enrollments";
-import { todayKey } from "@/lib/labels";
+import { SEMESTER_LABEL, todayKey } from "@/lib/labels";
 import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Calendario semanal" };
@@ -45,7 +45,7 @@ export default function CalendarPage() {
       <PageHeader
         eyebrow="Calendario"
         title="Calendario semanal de ACUDES"
-        description="Consulta las franjas de la semana, filtra por categoría y abre cada sesión para inscribirte o revisar su ocupación."
+        description={`${SEMESTER_LABEL}. Consulta las franjas, filtra por categoría y abre cada sesión para inscribirte o revisar su ocupación.`}
         actions={
           <>
             <Link href="/acudes" className={secondaryButtonClass}>

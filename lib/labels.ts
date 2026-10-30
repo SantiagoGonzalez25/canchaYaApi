@@ -134,6 +134,19 @@ export const REPORT_GROUP_LABELS: Record<ReportGroupBy, string> = {
 
 export const TIMEZONE = "America/Bogota";
 
+/** Período académico configurado para esta entrega. */
+export const CURRENT_SEMESTER = {
+  name: "2026-2",
+  start: "2026-08-03",
+  end: "2026-11-22",
+};
+
+export const SEMESTER_LABEL = `Semestre ${CURRENT_SEMESTER.name} · 03/08/2026 – 22/11/2026`;
+
+export function isWithinSemester(dateKey: string): boolean {
+  return dateKey >= CURRENT_SEMESTER.start && dateKey <= CURRENT_SEMESTER.end;
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   // Las fechas sin hora se interpretan al mediodía local para evitar el salto

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · CanchaYa",
   },
   description:
-    "Cartelera digital, inscripciones y ocupación de escenarios para las actividades culturales y deportivas del TdeA.",
+    "Sistema de gestión de ACUDES del Tecnológico de Antioquia.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

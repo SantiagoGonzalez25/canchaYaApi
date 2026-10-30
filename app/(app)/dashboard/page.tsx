@@ -6,7 +6,7 @@ import { listEnrollments } from "@/lib/data/enrollments";
 import { getOccupation } from "@/lib/data/occupation";
 import { attendanceReport, enrollmentReport } from "@/lib/data/reports";
 import { listScenarios } from "@/lib/data/scenarios";
-import { sessionsNow, upcomingSessions } from "@/lib/domain/agenda";
+import { upcomingSessions } from "@/lib/domain/agenda";
 import {
   CATEGORY_LABELS,
   formatDate,
@@ -14,7 +14,7 @@ import {
   WEEKDAY_LABELS,
 } from "@/lib/labels";
 import { requirePageUser } from "@/lib/web/session";
-import type { AuthUser, LiveAcude } from "@/lib/types";
+import type { AuthUser } from "@/lib/types";
 import { ReportChart } from "@/components/report-chart";
 import { AcudeImage } from "@/components/acude-image";
 import {
@@ -30,45 +30,13 @@ import {
 
 export const metadata: Metadata = { title: "Panel" };
 
-function SessionRow({
-  acude,
-  slot,
-  date,
-  enrolled,
-}: {
-  acude: LiveAcude;
-  slot: { day: string; startTime: string; endTime: string; scenarioName: string };
-  date: string;
-  enrolled?: number;
-}) {
-  return (
-    <li className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-3">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-slate-800">{acude.name}</p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          {WEEKDAY_LABELS[slot.day as keyof typeof WEEKDAY_LABELS]} {slot.startTime}–
-          {slot.endTime} · {slot.scenarioName}
-        </p>
-        <p className="mt-0.5 text-[11px] text-slate-400">{formatDate(date)}</p>
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-1">
-        <Badge tone="teal">{CATEGORY_LABELS[acude.category]}</Badge>
-        {enrolled !== undefined && (
-          <span className="text-xs text-slate-500">{enrolled} inscritos</span>
-        )}
-      </div>
-    </li>
-  );
-}
-
 async function StudentDashboard({ user }: { user: AuthUser }) {
   const [enrollments, acudes] = await Promise.all([
     listEnrollments({ userId: user.uid, status: "active" }),
     listLiveAcudes(),
   ]);
-  const now = sessionsNow(acudes);
-  const upcoming = upcomingSessions(acudes, new Date(), 6);
-  const availableSlots = acudes.reduce((sum, acude) => sum + acude.totalAvailable, 0);
+  const upcoming = upcomingSessions(acudes, new Date(), 1);
+  const next = upcoming[0];
   const enrolledAcudeIds = new Set(enrollments.map((item) => item.acudeId));
   const recommended = acudes
     .filter((acude) => !enrolledAcudeIds.has(acude.id))
@@ -79,106 +47,92 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
     <>
       <PageHeader
         eyebrow={`Hola, ${user.name.split(" ")[0]}`}
-        title="Resumen de inscripciones"
-        description="Consulta tus ACUDES activos, las próximas sesiones y los cupos disponibles."
+        title="Mi panel"
         actions={
           <>
             <Link href="/calendar" className={secondaryButtonClass}>
-              Ver calendario
+              Calendario
             </Link>
             <Link href="/acudes" className={buttonClass}>
-              Explorar cartelera
+              Cartelera
             </Link>
           </>
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Mis ACUDES activos"
-          value={enrollments.length}
-          hint="Inscripciones vigentes"
-        />
-        <StatCard
-          label="ACUDES en cartelera"
-          value={acudes.length}
-          hint="Oferta publicada"
-          tone="blue"
-        />
-        <StatCard
-          label="Cupos libres"
-          value={availableSlots}
-          hint="En todos los subgrupos"
-          tone="violet"
-        />
-        <StatCard
-          label="Sesiones en curso"
-          value={now.length}
-          hint={now.length > 0 ? "Sesiones activas en este momento" : "No hay sesiones en curso"}
-          tone={now.length > 0 ? "amber" : "teal"}
-        />
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-        <section className={`${cardClass} p-5`}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900">Próximas sesiones</h2>
-            <Link href="/calendar" className="text-xs font-semibold text-teal-700 hover:underline">
-              Calendario completo →
-            </Link>
+      <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+        <section className={`${cardClass} overflow-hidden`}>
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="text-lg font-bold text-slate-900">Mi próximo ACUDE</h2>
           </div>
-          {upcoming.length === 0 ? (
-            <EmptyState
-              title="Sin sesiones programadas"
-              description="Cuando te inscribas a un ACUDE, sus franjas aparecerán aquí."
-            />
+          {next ? (
+            <div className="grid gap-4 p-5 sm:grid-cols-[10rem_1fr]">
+              <AcudeImage
+                src={next.acude.imageUrl}
+                name={next.acude.name}
+                className="h-32 w-full rounded-xl sm:h-full"
+              />
+              <div className="flex flex-col">
+                <Badge tone={next.acude.category === "sports" ? "teal" : "violet"}>
+                  {CATEGORY_LABELS[next.acude.category]}
+                </Badge>
+                <h3 className="mt-2 text-xl font-bold text-slate-900">{next.acude.name}</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  {WEEKDAY_LABELS[next.slot.day]} {next.slot.startTime}–{next.slot.endTime}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {next.slot.scenarioName} · {next.acude.teacherName}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">{formatDate(next.date)}</p>
+                <Link
+                  href={`/acudes/${next.acude.id}`}
+                  className="mt-4 text-sm font-semibold text-teal-700 hover:underline"
+                >
+                  Ver ficha del ACUDE
+                </Link>
+              </div>
+            </div>
           ) : (
-            <ul className="flex flex-col gap-2">
-              {upcoming.map((item) => (
-                <SessionRow
-                  key={`${item.acude.id}-${item.slot.id}`}
-                  acude={item.acude}
-                  slot={item.slot}
-                  date={item.date}
-                  enrolled={item.slot.enrolled}
-                />
-              ))}
-            </ul>
+            <div className="p-5">
+              <EmptyState
+                title="No tienes una próxima sesión"
+                description="Inscríbete a un ACUDE para ver aquí tu siguiente clase."
+                action={
+                  <Link href="/acudes" className={buttonClass}>
+                    Ver cartelera
+                  </Link>
+                }
+              />
+            </div>
           )}
         </section>
 
         <section className={`${cardClass} p-5`}>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900">Mis inscripciones</h2>
+            <h2 className="text-lg font-bold text-slate-900">Mis ACUDES</h2>
             <Link
               href="/my-enrollments"
               className="text-xs font-semibold text-teal-700 hover:underline"
             >
-              Gestionar →
+              Gestionar
             </Link>
           </div>
           {enrollments.length === 0 ? (
-            <EmptyState
-              title="Aún no tienes ACUDES"
-              description="Inscríbete desde la cartelera o desde el calendario semanal."
-              action={
-                <Link href="/acudes" className={buttonClass}>
-                  Ver cartelera
-                </Link>
-              }
-            />
+            <p className="text-sm text-slate-500">Todavía no tienes inscripciones activas.</p>
           ) : (
             <ul className="flex flex-col gap-2">
-              {enrollments.slice(0, 4).map((enrollment) => (
-                <li key={enrollment.id} className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-sm font-semibold text-slate-800">{enrollment.acudeName}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {WEEKDAY_LABELS[enrollment.day]} {enrollment.startTime}–{enrollment.endTime} ·{" "}
-                    {enrollment.scenarioName}
-                  </p>
-                  <p className="mt-1 text-[11px] font-medium text-teal-700">
-                    Inscrito el {formatDate(enrollment.enrolledAt)}
-                  </p>
+              {enrollments.map((enrollment) => (
+                <li key={enrollment.id}>
+                  <Link
+                    href={`/acudes/${enrollment.acudeId}`}
+                    className="block rounded-xl bg-slate-50 p-3 transition hover:bg-teal-50"
+                  >
+                    <p className="text-sm font-semibold text-slate-800">{enrollment.acudeName}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {WEEKDAY_LABELS[enrollment.day]} {enrollment.startTime}–{enrollment.endTime}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-teal-700">Ver ficha</p>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -188,16 +142,15 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
 
       <section className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">ACUDES con cupos disponibles</h2>
+          <h2 className="text-lg font-bold text-slate-900">ACUDES con cupos</h2>
           <Link href="/acudes" className="text-xs font-semibold text-teal-700 hover:underline">
-            Ver todos →
+            Ver todos
           </Link>
         </div>
         {recommended.length === 0 ? (
-          <EmptyState
-            title="No hay cupos nuevos por ahora"
-            description="Revisa la cartelera más tarde; los cupos se liberan cuando alguien cancela."
-          />
+          <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+            No hay cupos nuevos por ahora.
+          </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
             {recommended.map((acude) => (
@@ -222,10 +175,7 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
                 <h3 className="mt-3 font-bold text-slate-900 group-hover:text-teal-800">
                   {acude.name}
                 </h3>
-                <p className="mt-1 line-clamp-2 text-xs text-slate-500">{acude.description}</p>
-                <p className="mt-3 text-xs font-medium text-slate-600">
-                  {acude.schedule.length} subgrupo(s) · {acude.teacherName}
-                </p>
+                <p className="mt-1 text-xs text-slate-500">{acude.teacherName}</p>
               </Link>
             ))}
           </div>
