@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { EnrollmentPanel } from "@/components/enrollment-panel";
+import { AcudeImage } from "@/components/acude-image";
 import {
   Badge,
   buttonClass,
@@ -58,13 +59,29 @@ function eventStyle(category: LiveAcude["category"]): React.CSSProperties {
   };
 }
 
+const MOBILE_QUERY = "(max-width: 767px)";
+function subscribeMobile(callback: () => void) {
+  const query = window.matchMedia(MOBILE_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+function mobileSnapshot() {
+  return window.matchMedia(MOBILE_QUERY).matches;
+}
+function serverMobileSnapshot() {
+  return false;
+}
+
 export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: CalendarProps) {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
-  const [view, setView] = useState<"week" | "agenda">("week");
+  const [viewChoice, setViewChoice] = useState<"week" | "agenda" | null>(null);
+  const isMobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, serverMobileSnapshot);
+  const view = viewChoice ?? (isMobile ? "agenda" : "week");
+  const setView = setViewChoice;
   const [category, setCategory] = useState("");
   const [query, setQuery] = useState("");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
-  const [onlyMine, setOnlyMine] = useState(false);
+  const [onlyMine, setOnlyMine] = useState(isStudent);
   const [selected, setSelected] = useState<{ acudeId: string; slotId: string } | null>(null);
 
   const enrolledAcudeIds = useMemo(
@@ -473,6 +490,13 @@ export function Calendar({ acudes, today, userSex, myEnrollments, isStudent }: C
                 ×
               </button>
             </div>
+            {selectedAcude.imageUrl && (
+              <AcudeImage
+                src={selectedAcude.imageUrl}
+                name={selectedAcude.name}
+                className="h-44 w-full"
+              />
+            )}
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <p className="text-sm leading-relaxed text-slate-600">{selectedAcude.description}</p>

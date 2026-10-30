@@ -7,7 +7,7 @@ import { SEX_LABELS, formatDate } from "@/lib/labels";
 import { listManagers } from "@/lib/services/auth";
 import { requirePageUser } from "@/lib/web/session";
 
-export const metadata: Metadata = { title: "Gestores institucionales" };
+export const metadata: Metadata = { title: "Profesores institucionales" };
 
 async function UsersContent() {
   await requirePageUser("admin");
@@ -15,17 +15,17 @@ async function UsersContent() {
   return (
     <div className="grid gap-6 lg:grid-cols-[0.4fr_0.6fr]">
       <section className={`${cardClass} h-fit p-5 lg:sticky lg:top-20`}>
-        <h2 className="text-lg font-bold text-slate-900">Nuevo gestor de ACUDES</h2>
+        <h2 className="text-lg font-bold text-slate-900">Nuevo profesor</h2>
         <p className="mb-4 mt-1 text-xs text-slate-500">
-          Crea perfiles institucionales con rol de gestor. Los estudiantes se registran desde la
-          página pública y nunca pueden elegir su rol.
+          Crea el perfil del profesor y asígnale un ACUDE desde la gestión de ACUDES. Los
+          estudiantes se registran desde la página pública.
         </p>
         <ManagerForm />
       </section>
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">Gestores registrados</h2>
+          <h2 className="text-lg font-bold text-slate-900">Profesores registrados</h2>
           <Badge tone="neutral">{managers.length}</Badge>
         </div>
         <ul className="flex flex-col gap-3">
@@ -39,12 +39,12 @@ async function UsersContent() {
                   {formatDate(manager.createdAt)}
                 </p>
               </div>
-              <Badge tone="teal">Gestor</Badge>
+              <Badge tone="teal">Profesor</Badge>
             </li>
           ))}
           {managers.length === 0 && (
             <li className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-              Aún no hay gestores. Crea el primero con el formulario de la izquierda o usa{" "}
+              Aún no hay profesores. Crea el primero con el formulario de la izquierda o usa{" "}
               <code className="rounded bg-slate-100 px-1">pnpm create-user</code>.
             </li>
           )}
@@ -67,8 +67,8 @@ export default function UsersPage() {
     <>
       <PageHeader
         eyebrow="Administración"
-        title="Perfiles institucionales"
-        description="Alta y consulta de gestores de ACUDES. Solo un administrador puede crear otros perfiles."
+        title="Perfiles de profesores"
+        description="Alta y consulta de profesores. Solo un administrador puede crear estos perfiles y asignarles un ACUDE."
         actions={
           <Link href="/manager/acudes" className={secondaryButtonClass}>
             Gestionar ACUDES

@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Calendario semanal" };
 async function CalendarContent() {
   const user = await requirePageUser();
   const [acudes, myEnrollments] = await Promise.all([
-    listLiveAcudes(),
+    listLiveAcudes(user.role === "manager" ? { teacherId: user.uid } : {}),
     user.role === "student"
       ? listMyEnrollments(user, { status: "active" })
       : Promise.resolve([]),

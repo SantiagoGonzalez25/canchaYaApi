@@ -22,7 +22,13 @@ function buildMatrix(report: ReportResult) {
   return { keys, labels, rows };
 }
 
-export function ReportChart({ report }: { report: ReportResult }) {
+export function ReportChart({
+  report,
+  height = 430,
+}: {
+  report: ReportResult;
+  height?: number;
+}) {
   const container = useRef<HTMLDivElement>(null);
   const serialized = JSON.stringify(report);
 
@@ -39,7 +45,7 @@ export function ReportChart({ report }: { report: ReportResult }) {
           type: "column",
           backgroundColor: "transparent",
           style: { fontFamily: "inherit" },
-          height: 430,
+          height,
         },
         title: { text: undefined },
         credits: { enabled: false },
@@ -99,9 +105,9 @@ export function ReportChart({ report }: { report: ReportResult }) {
       cancelled = true;
       chart?.destroy();
     };
-  }, [serialized]);
+  }, [serialized, height]);
 
-  return <div ref={container} className="h-[430px] w-full" role="img" aria-label="Gráfica del reporte" />;
+  return <div ref={container} className="w-full" style={{ height }} role="img" aria-label="Gráfica del reporte" />;
 }
 
 export function ReportActions({ report }: { report: ReportResult }) {

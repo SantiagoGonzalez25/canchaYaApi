@@ -30,7 +30,8 @@ async function ScenarioManager({
 }: {
   searchParams: PageProps<"/manager/scenarios">["searchParams"];
 }) {
-  await requirePageStaff();
+  const user = await requirePageStaff();
+  const isAdmin = user.role === "admin";
   const params = await searchParams;
   const scenarios = await listScenarios();
   const notice = first(params.saved)
@@ -53,14 +54,16 @@ async function ScenarioManager({
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[0.38fr_0.62fr]">
-        <section className={`${cardClass} h-fit p-5 lg:sticky lg:top-20`}>
-          <h2 className="text-lg font-bold text-slate-900">Nuevo escenario</h2>
-          <p className="mb-4 mt-1 text-xs text-slate-500">
-            Los escenarios son las canchas, salones, coliseos y auditorios que ocupan los ACUDES.
-          </p>
-          <ScenarioForm />
-        </section>
+      <div className={isAdmin ? "grid gap-6 lg:grid-cols-[0.38fr_0.62fr]" : "grid gap-6"}>
+        {isAdmin && (
+          <section className={`${cardClass} h-fit p-5 lg:sticky lg:top-20`}>
+            <h2 className="text-lg font-bold text-slate-900">Nuevo escenario</h2>
+            <p className="mb-4 mt-1 text-xs text-slate-500">
+              Los escenarios son las canchas, salones, coliseos y auditorios que ocupan los ACUDES.
+            </p>
+            <ScenarioForm />
+          </section>
+        )}
 
         <section>
           <div className="mb-3 flex items-center justify-between">
@@ -70,7 +73,11 @@ async function ScenarioManager({
           {scenarios.length === 0 ? (
             <EmptyState
               title="Aún no hay escenarios"
-              description="Crea el primero con el formulario de la izquierda."
+              description={
+                isAdmin
+                  ? "Crea el primero con el formulario de la izquierda."
+                  : "El administrador aún no ha registrado escenarios."
+              }
             />
           ) : (
             <ul className="flex flex-col gap-3">
@@ -105,25 +112,27 @@ async function ScenarioManager({
                         Actualizado {formatDate(scenario.updatedAt)}
                       </p>
                     </div>
-                    <details className="w-full sm:w-auto">
-                      <summary className={`${secondaryButtonClass} cursor-pointer list-none`}>
-                        Editar
-                      </summary>
-                      <div className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 sm:w-96">
-                        <ScenarioForm scenario={scenario} />
-                        <form
-                          action={deleteScenarioAction.bind(null, scenario.id)}
-                          className="mt-2 border-t border-slate-200 pt-2"
-                        >
-                          <ConfirmSubmit
-                            message={`¿Eliminar "${scenario.name}"? Solo es posible si ningún ACUDE activo lo usa.`}
-                            className="text-xs font-semibold text-rose-600 hover:underline"
+                    {isAdmin && (
+                      <details className="w-full sm:w-auto">
+                        <summary className={`${secondaryButtonClass} cursor-pointer list-none`}>
+                          Editar
+                        </summary>
+                        <div className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 sm:w-96">
+                          <ScenarioForm scenario={scenario} />
+                          <form
+                            action={deleteScenarioAction.bind(null, scenario.id)}
+                            className="mt-2 border-t border-slate-200 pt-2"
                           >
-                            Eliminar escenario
-                          </ConfirmSubmit>
-                        </form>
-                      </div>
-                    </details>
+                            <ConfirmSubmit
+                              message={`¿Eliminar "${scenario.name}"? Solo es posible si ningún ACUDE activo lo usa.`}
+                              className="text-xs font-semibold text-rose-600 hover:underline"
+                            >
+                              Eliminar escenario
+                            </ConfirmSubmit>
+                          </form>
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </li>
               ))}
@@ -151,7 +160,7 @@ export default function ScenariosPage(props: PageProps<"/manager/scenarios">) {
       <PageHeader
         eyebrow="Gestión"
         title="Escenarios institucionales"
-        description="Canchas, coliseos, salones y auditorios disponibles para programar ACUDES."
+        description="Canchas, coliseos, salones y auditorios disponibles para programar ACUDES. Solo el administrador puede modificarlos."
         actions={
           <Link href="/manager/occupation" className={secondaryButtonClass}>
             Panel de ocupación

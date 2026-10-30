@@ -35,7 +35,7 @@ async function AcudeManager({
 }: {
   searchParams: PageProps<"/manager/acudes">["searchParams"];
 }) {
-  await requirePageStaff();
+  const user = await requirePageStaff();
   const params = await searchParams;
   const q = first(params.q)?.trim() || undefined;
   const status = first(params.status) as
@@ -49,7 +49,13 @@ async function AcudeManager({
     | "training"
     | "recreational"
     | undefined;
-  const acudes = await listAcudes({ q, status: status || undefined, category });
+  const acudes = await listAcudes({
+    q,
+    status: status || undefined,
+    category,
+    ...(user.role === "manager" ? { teacherId: user.uid } : {}),
+  });
+  const isAdmin = user.role === "admin";
   const notice = first(params.archived)
     ? "ACUDE archivado. Su histórico de inscripciones y asistencia se conserva."
     : first(params.saved)
@@ -105,8 +111,15 @@ async function AcudeManager({
         </Link>
       </form>
 
-      <p className="mb-3 text-sm text-slate-600">
-        <span className="font-bold text-slate-900">{acudes.length}</span> ACUDES en la vista
+      <p className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
+        <span>
+          <span className="font-bold text-slate-900">{acudes.length}</span> ACUDES en la vista
+        </span>
+        {isAdmin && (
+          <Link href="/manager/acudes/new" className={buttonClass}>
+            Nuevo ACUDE
+          </Link>
+        )}
       </p>
 
       {acudes.length === 0 ? (
@@ -184,17 +197,24 @@ async function AcudeManager({
                         Ver ficha
                       </Link>
                     )}
-                    <Link href={`/manager/acudes/${acude.id}`} className={buttonClass}>
-                      Editar
+                    <Link href={`/manager/attendance?acudeId=${acude.id}`} className={secondaryButtonClass}>
+                      Asistencia
                     </Link>
-                    <form action={archiveAcudeAction.bind(null, acude.id)}>
-                      <ConfirmSubmit
-                        message={`¿Archivar "${acude.name}"? Dejará de aparecer en la cartelera y liberará sus franjas para otros ACUDES.`}
-                        className={secondaryButtonClass}
-                      >
-                        Archivar
-                      </ConfirmSubmit>
-                    </form>
+                    {isAdmin && (
+                      <>
+                        <Link href={`/manager/acudes/${acude.id}`} className={buttonClass}>
+                          Editar
+                        </Link>
+                        <form action={archiveAcudeAction.bind(null, acude.id)}>
+                          <ConfirmSubmit
+                            message={`¿Archivar "${acude.name}"? Dejará de aparecer en la cartelera y liberará sus franjas para otros ACUDES.`}
+                            className={secondaryButtonClass}
+                          >
+                            Archivar
+                          </ConfirmSubmit>
+                        </form>
+                      </>
+                    )}
                   </div>
                 </div>
               </li>
@@ -212,16 +232,11 @@ export default function ManagerAcudesPage(props: PageProps<"/manager/acudes">) {
       <PageHeader
         eyebrow="Gestión"
         title="ACUDES y subgrupos"
-        description="Define grupos, docentes, escenarios, cupos y franjas. El servidor impide cruces de escenario y de docente."
+        description="Consulta grupos, docentes, escenarios, cupos y franjas. La creación y edición están reservadas al administrador."
         actions={
-          <>
-            <Link href="/manager/occupation" className={secondaryButtonClass}>
-              Ver ocupación
-            </Link>
-            <Link href="/manager/acudes/new" className={buttonClass}>
-              + Nuevo ACUDE
-            </Link>
-          </>
+          <Link href="/manager/occupation" className={secondaryButtonClass}>
+            Ver ocupación
+          </Link>
         }
       />
       <Suspense

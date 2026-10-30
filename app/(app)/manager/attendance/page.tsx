@@ -3,25 +3,17 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AttendanceForm } from "@/components/attendance-form";
 import {
-  Badge,
+  Alert,
   buttonClass,
   cardClass,
   EmptyState,
   PageHeader,
   secondaryButtonClass,
   selectClass,
-  StatCard,
 } from "@/components/ui";
 import { listAcudes } from "@/lib/data/acudes";
 import { attendanceRoster } from "@/lib/data/attendance";
-import { listScenarios } from "@/lib/data/scenarios";
-import {
-  formatDate,
-  isDateKey,
-  todayKey,
-  WEEKDAY_LABELS,
-  weekdayOf,
-} from "@/lib/labels";
+import { formatDateNumeric, isDateKey, todayKey, WEEKDAY_LABELS } from "@/lib/labels";
 import { requirePageStaff } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Control de asistencia" };
@@ -34,18 +26,31 @@ async function AttendanceContent({
 }: {
   searchParams: PageProps<"/manager/attendance">["searchParams"];
 }) {
-  await requirePageStaff();
+  const user = await requirePageStaff();
   const params = await searchParams;
-  const [acudes, scenarios] = await Promise.all([listAcudes(), listScenarios()]);
+  const acudes = await listAcudes(
+    user.role === "manager" ? { teacherId: user.uid } : {},
+  );
+
   if (acudes.length === 0) {
     return (
       <EmptyState
-        title="Primero crea un ACUDE"
-        description="La asistencia se registra sobre inscripciones activas de una franja."
+        title={
+          user.role === "manager"
+            ? "No tienes un ACUDE asignado"
+            : "Primero crea un ACUDE"
+        }
+        description={
+          user.role === "manager"
+            ? "El administrador debe asignarte un ACUDE y una franja horaria para poder registrar asistencia."
+            : "La asistencia se registra sobre inscripciones activas de una franja."
+        }
         action={
-          <Link href="/manager/acudes/new" className={buttonClass}>
-            Crear ACUDE
-          </Link>
+          user.role === "admin" ? (
+            <Link href="/manager/acudes/new" className={buttonClass}>
+              Crear ACUDE
+            </Link>
+          ) : null
         }
       />
     );
@@ -53,32 +58,30 @@ async function AttendanceContent({
 
   const requestedAcude = first(params.acudeId);
   const acude =
-    acudes.find((item) => item.id === requestedAcude) ??
-    acudes.find((item) => item.status === "published") ??
-    acudes[0];
+    acudes.find((item) => item.id === requestedAcude) ?? acudes[0];
   const requestedSlot = first(params.slotId);
   const slot =
     acude.schedule.find((item) => item.id === requestedSlot) ?? acude.schedule[0];
   const requestedDate = first(params.date);
   const date = isDateKey(requestedDate) ? requestedDate : todayKey();
-  const scenarioName =
-    scenarios.find((scenario) => scenario.id === slot.scenarioId)?.name ?? slot.scenarioId;
   const { enrollments, attendance } = await attendanceRoster(acude.id, slot.id, date);
-  const present = attendance.filter(
-    (item) => item.status === "present" || item.status === "late",
-  ).length;
-  const recorded = attendance.length;
 
   return (
     <>
       <form className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1.2fr_1.2fr_auto_auto]">
-        <select name="acudeId" defaultValue={acude.id} className={selectClass} aria-label="ACUDE">
-          {acudes.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
+        {user.role === "admin" ? (
+          <select name="acudeId" defaultValue={acude.id} className={selectClass} aria-label="ACUDE">
+            {acudes.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+            {acude.name}
+          </div>
+        )}
         <select name="slotId" defaultValue={slot.id} className={selectClass} aria-label="Franja">
           {acude.schedule.map((item) => (
             <option key={item.id} value={item.id}>
@@ -96,46 +99,37 @@ async function AttendanceContent({
         <button className={buttonClass}>Cargar lista</button>
       </form>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Inscritos activos" value={enrollments.length} />
-        <StatCard label="Registros del día" value={recorded} tone="blue" />
-        <StatCard
-          label="Asistencia efectiva"
-          value={`${recorded > 0 ? Math.round((present / recorded) * 100) : 0}%`}
-          tone="violet"
-        />
-        <StatCard
-          label="Asistencia mínima"
-          value={`${acude.attendanceMin}%`}
-          tone="amber"
-        />
-      </div>
-
       <section className={`${cardClass} p-5`}>
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="teal">{acude.semester}</Badge>
-              <Badge tone="neutral">{acude.discipline}</Badge>
-            </div>
-            <h2 className="mt-2 text-lg font-bold text-slate-900">{acude.name}</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-teal-700">
+              Control de asistencia
+            </p>
+            <h2 className="mt-1 text-xl font-bold text-slate-900">
+              Asistencia de {acude.name}
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {WEEKDAY_LABELS[slot.day]} {slot.startTime}–{slot.endTime} ·{" "}
-              {formatDate(`${date}T12:00:00`)} · {scenarioName}
+              {formatDateNumeric(date)} · {WEEKDAY_LABELS[slot.day]} {slot.startTime}–{slot.endTime}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              Docente: {acude.teacherName} · Día de la fecha: {WEEKDAY_LABELS[weekdayOf(date)]}
+              Docente: {acude.teacherName}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/manager/acudes/${acude.id}`} className={secondaryButtonClass}>
-              Editar ACUDE
-            </Link>
-            <Link href="/manager/reports?kind=attendance" className={secondaryButtonClass}>
-              Reporte de asistencia
-            </Link>
-          </div>
+          <Link
+            href={`/manager/reports?kind=attendance&acudeId=${acude.id}`}
+            className={secondaryButtonClass}
+          >
+            Ver reporte
+          </Link>
         </div>
+
+        {attendance.length > 0 && (
+          <div className="mb-4">
+            <Alert kind="info">
+              Esta sesión ya tiene asistencia registrada. Puedes corregirla y volver a guardar.
+            </Alert>
+          </div>
+        )}
 
         <AttendanceForm
           key={`${acude.id}-${slot.id}-${date}`}
@@ -148,8 +142,8 @@ async function AttendanceContent({
       </section>
 
       <p className="mt-4 text-xs text-slate-500">
-        El registro es idempotente por estudiante y fecha: guardar dos veces el mismo día actualiza
-        la asistencia, no crea duplicados.
+        La asistencia se guarda por estudiante y fecha. Si se vuelve a guardar el mismo día, se
+        actualiza el registro.
       </p>
     </>
   );
@@ -159,14 +153,9 @@ export default function AttendancePage(props: PageProps<"/manager/attendance">) 
   return (
     <>
       <PageHeader
-        eyebrow="Gestión · Asistencia"
-        title="Control de asistencia real"
-        description="Registra el uso real de cada subgrupo para evitar acuerdos informales y alimentar los reportes por ACUDE."
-        actions={
-          <Link href="/manager/occupation" className={secondaryButtonClass}>
-            Ver ocupación
-          </Link>
-        }
+        eyebrow="Profesor"
+        title="Control de asistencia"
+        description="Selecciona el ACUDE, la franja y la fecha. La lista muestra únicamente los estudiantes inscritos."
       />
       <Suspense
         fallback={<div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />}

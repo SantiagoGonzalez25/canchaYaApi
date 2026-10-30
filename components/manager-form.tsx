@@ -53,13 +53,10 @@ export function ManagerForm() {
           <input name="phone" type="tel" maxLength={30} className={inputClass} />
         </Field>
       </div>
-      <Field label="Documento (opcional)">
-        <input name="documentId" maxLength={30} className={inputClass} />
-      </Field>
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && <Alert kind="ok">{state.ok}</Alert>}
       <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Creando..." : "Crear perfil de gestor"}
+        {pending ? "Creando..." : "Crear perfil de profesor"}
       </button>
     </form>
   );

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CATEGORY_LABELS, timeLabel, WEEKDAY_LABELS } from "@/lib/labels";
 import type { LiveAcude } from "@/lib/types";
+import { AcudeImage } from "./acude-image";
 import { Badge, cardClass, ProgressBar } from "./ui";
 
 export function AcudeCard({ acude }: { acude: LiveAcude }) {
@@ -9,8 +10,11 @@ export function AcudeCard({ acude }: { acude: LiveAcude }) {
   return (
     <Link
       href={`/acudes/${acude.id}`}
-      className={`${cardClass} group flex flex-col p-5 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md`}
+      className={`${cardClass} group flex flex-col overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md`}
     >
+      <div className="-mx-5 -mt-5 mb-4 overflow-hidden">
+        <AcudeImage src={acude.imageUrl} name={acude.name} className="h-36 w-full" />
+      </div>
       <div className="flex items-start justify-between gap-3">
         <Badge tone={tone}>{CATEGORY_LABELS[acude.category]}</Badge>
         <span

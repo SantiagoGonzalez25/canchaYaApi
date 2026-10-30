@@ -54,7 +54,8 @@ async function ReportsContent({
 }: {
   searchParams: PageProps<"/manager/reports">["searchParams"];
 }) {
-  await requirePageStaff();
+  const user = await requirePageStaff();
+  const isAdmin = user.role === "admin";
   const params = await searchParams;
   const kind = first(params.kind) === "attendance" ? "attendance" : "enrollments";
   const defaultGroup: ReportGroupBy = kind === "attendance" ? "acude" : "date";
@@ -74,15 +75,17 @@ async function ReportsContent({
     "status",
     "teacherId",
     "userId",
+    "student",
   ]) {
     const value = first(params[key]);
     if (value) raw[key] = value;
   }
+  if (user.role === "manager") raw.teacherId = user.uid;
   const parsed = reportQuerySchema.safeParse(raw);
   const query: ReportQuery = parsed.success ? parsed.data : { groupBy: defaultGroup };
 
   const [acudes, scenarios, report] = await Promise.all([
-    listAcudes(),
+    listAcudes(user.role === "manager" ? { teacherId: user.uid } : {}),
     listScenarios(),
     kind === "attendance" ? attendanceReport(query) : enrollmentReport(query),
   ]);
@@ -150,6 +153,15 @@ async function ReportsContent({
             type="date"
             name="to"
             defaultValue={first(params.to) ?? report.to}
+            className={selectClass}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+          Estudiante
+          <input
+            name="student"
+            defaultValue={first(params.student) ?? ""}
+            placeholder="Nombre o correo"
             className={selectClass}
           />
         </label>
@@ -249,17 +261,19 @@ async function ReportsContent({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-          Docente
-          <select name="teacherId" defaultValue={first(params.teacherId) ?? ""} className={selectClass}>
-            <option value="">Todos</option>
-            {teachers.map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {isAdmin && (
+          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+            Docente
+            <select name="teacherId" defaultValue={first(params.teacherId) ?? ""} className={selectClass}>
+              <option value="">Todos</option>
+              {teachers.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
           Agrupar por
           <select name="groupBy" defaultValue={groupBy} className={selectClass}>

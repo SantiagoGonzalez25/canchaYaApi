@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { archiveAcude, createAcude, updateAcude } from "@/lib/data/acudes";
+import { archiveAcude, createAcude, updateAcude, updateAcudeImage } from "@/lib/data/acudes";
 import { saveAttendance } from "@/lib/data/attendance";
 import { cancelEnrollment, createEnrollment } from "@/lib/data/enrollments";
 import { createScenario, deleteScenario, updateScenario } from "@/lib/data/scenarios";
@@ -24,6 +24,7 @@ import {
   login,
   register,
 } from "@/lib/services/auth";
+import { uploadAcudeImage } from "@/lib/services/storage";
 import {
   clearSessionCookie,
   requireWebStaff,
@@ -79,13 +80,13 @@ export async function logoutAction(): Promise<void> {
 export async function enrollAction(input: {
   acudeId: string;
   slotId: string;
-  sex: string;
+  sex?: string;
 }): Promise<EnrollState> {
   const user = await requireWebUser("student");
   const parsed = createEnrollmentSchema.safeParse({
     acudeId: input.acudeId,
     slotId: input.slotId,
-    sex: input.sex,
+    ...(input.sex ? { sex: input.sex } : {}),
     clientRequestId: randomUUID(),
   });
   if (!parsed.success) return { error: firstIssue(parsed.error) };
@@ -138,7 +139,7 @@ export async function enrollFormAction(
   return enrollAction({
     acudeId: String(formData.get("acudeId") ?? ""),
     slotId: String(formData.get("slotId") ?? ""),
-    sex: String(formData.get("sex") ?? ""),
+    ...(formData.get("sex") ? { sex: String(formData.get("sex")) } : {}),
   });
 }
 
@@ -159,7 +160,7 @@ function parseJson(value: FormDataEntryValue | null): unknown {
 }
 
 export async function saveAcudeAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireWebStaff();
+  const user = await requireWebUser("admin");
   const id = String(formData.get("id") ?? "");
   const raw = parseJson(formData.get("payload"));
   const parsed = acudeSchema.safeParse(raw);
@@ -171,6 +172,13 @@ export async function saveAcudeAction(_prev: FormState, formData: FormData): Pro
       ? await updateAcude(id, parsed.data, user)
       : await createAcude(parsed.data, user);
     savedId = acude.id;
+
+    const imageFile = formData.get("imageFile");
+    if (imageFile instanceof File && imageFile.size > 0) {
+      const image = await uploadAcudeImage(acude.id, imageFile);
+      await updateAcudeImage(acude.id, image.url, image.path);
+    }
+
     revalidatePath("/manager/acudes");
     revalidatePath("/acudes");
     revalidatePath("/calendar");
@@ -185,7 +193,7 @@ export async function saveAcudeAction(_prev: FormState, formData: FormData): Pro
 }
 
 export async function archiveAcudeAction(id: string): Promise<void> {
-  await requireWebStaff();
+  await requireWebUser("admin");
   try {
     await archiveAcude(id);
   } catch (err) {
@@ -200,7 +208,7 @@ export async function archiveAcudeAction(id: string): Promise<void> {
 }
 
 export async function saveScenarioAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireWebStaff();
+  await requireWebUser("admin");
   const id = String(formData.get("id") ?? "");
   const parsed = scenarioSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: firstIssue(parsed.error) };
@@ -218,7 +226,7 @@ export async function saveScenarioAction(_prev: FormState, formData: FormData): 
 }
 
 export async function deleteScenarioAction(id: string): Promise<void> {
-  await requireWebStaff();
+  await requireWebUser("admin");
   try {
     await deleteScenario(id);
   } catch (err) {

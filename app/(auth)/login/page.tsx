@@ -17,6 +17,12 @@ export default function LoginPage() {
   return (
     <div className="mx-auto grid max-w-5xl gap-8 py-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
       <section className="hidden lg:block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/tdea-horizontal.svg"
+          alt="Tecnológico de Antioquia"
+          className="mb-6 h-10 w-auto"
+        />
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">
           Bienestar Institucional · TdeA
         </p>
@@ -48,10 +54,16 @@ export default function LoginPage() {
           <RedirectIfSignedIn />
         </Suspense>
         <div className="mb-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/tdea-horizontal.svg"
+            alt="Tecnológico de Antioquia"
+            className="mb-4 h-9 w-auto"
+          />
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700">CanchaYa</p>
           <h2 className="mt-1 text-2xl font-bold text-slate-900">Iniciar sesión</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Estudiantes, gestores de ACUDES y administradores.
+            Estudiantes, profesores y administradores.
           </p>
         </div>
         <AuthForm mode="login" />

@@ -82,11 +82,16 @@ async function OccupationContent({
 }: {
   searchParams: PageProps<"/manager/occupation">["searchParams"];
 }) {
-  await requirePageStaff();
+  const user = await requirePageStaff();
   const params = await searchParams;
   const requestedDate = first(params.date);
   const date = isDateKey(requestedDate) ? requestedDate : todayKey();
-  const occupation = await getOccupation(date);
+  const occupation = await getOccupation(
+    date,
+    undefined,
+    new Date(),
+    user.role === "manager" ? user.uid : undefined,
+  );
   const inSession = occupation.scenarios.flatMap((item) =>
     item.current ? [item.current] : [],
   );

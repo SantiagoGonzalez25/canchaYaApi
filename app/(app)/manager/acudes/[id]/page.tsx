@@ -15,7 +15,7 @@ import { getAcude, listScenarioOptions } from "@/lib/data/acudes";
 import { ApiError } from "@/lib/errors";
 import { ACUDE_STATUS_LABELS, formatDateTime } from "@/lib/labels";
 import { listManagers } from "@/lib/services/auth";
-import { requirePageStaff } from "@/lib/web/session";
+import { requirePageAdmin } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Editar ACUDE" };
 
@@ -29,7 +29,7 @@ async function EditAcude({
   params: PageProps<"/manager/acudes/[id]">["params"];
   searchParams: PageProps<"/manager/acudes/[id]">["searchParams"];
 }) {
-  await requirePageStaff();
+  await requirePageAdmin();
   const { id } = await params;
   const query = await searchParams;
   const acude = await getAcude(id).catch((err) => {

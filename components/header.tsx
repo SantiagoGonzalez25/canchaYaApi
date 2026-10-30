@@ -23,11 +23,11 @@ function navItems(role: "student" | "manager" | "admin"): NavItem[] {
     { href: "/dashboard", label: "Panel" },
     { href: "/calendar", label: "Calendario" },
     { href: "/manager/occupation", label: "Ocupación" },
-    { href: "/manager/acudes", label: "ACUDES" },
+    { href: "/manager/acudes", label: role === "manager" ? "Mi ACUDE" : "ACUDES" },
     { href: "/manager/scenarios", label: "Escenarios" },
     { href: "/manager/attendance", label: "Asistencia" },
     { href: "/manager/reports", label: "Reportes" },
-    ...(role === "admin" ? [{ href: "/manager/users", label: "Gestores" }] : []),
+    ...(role === "admin" ? [{ href: "/manager/users", label: "Profesores" }] : []),
   ];
 }
 
@@ -42,15 +42,18 @@ export async function Header() {
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
         <Link href={user ? "/dashboard" : "/login"} className="flex shrink-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-emerald-500 text-lg font-black text-white shadow-sm">
-            C
-          </span>
-          <span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/tdea-horizontal.svg"
+            alt="Tecnológico de Antioquia"
+            className="h-8 w-auto"
+          />
+          <span className="border-l border-slate-200 pl-2.5">
             <span className="block text-base font-black leading-4 tracking-tight text-slate-900">
               CanchaYa
             </span>
             <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">
-              ACUDES · TdeA
+              ACUDES
             </span>
           </span>
         </Link>
@@ -97,12 +100,6 @@ export async function Header() {
                       {item.label}
                     </Link>
                   ))}
-                  <Link
-                    href="/api/docs"
-                    className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-teal-50"
-                  >
-                    Documentación API
-                  </Link>
                   <form action={logoutAction}>
                     <button className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-700 hover:bg-rose-50">
                       Cerrar sesión

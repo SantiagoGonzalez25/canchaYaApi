@@ -54,14 +54,6 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               />
             </Field>
           </div>
-          <Field label="Documento (opcional)">
-            <input
-              name="documentId"
-              maxLength={30}
-              className={inputClass}
-              placeholder="Cédula o carné"
-            />
-          </Field>
         </>
       )}
 

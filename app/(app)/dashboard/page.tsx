@@ -15,6 +15,8 @@ import {
 } from "@/lib/labels";
 import { requirePageUser } from "@/lib/web/session";
 import type { AuthUser, LiveAcude } from "@/lib/types";
+import { ReportChart } from "@/components/report-chart";
+import { AcudeImage } from "@/components/acude-image";
 import {
   Badge,
   buttonClass,
@@ -204,6 +206,11 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
                 href={`/acudes/${acude.id}`}
                 className={`${cardClass} group p-4 transition hover:-translate-y-0.5 hover:border-teal-300`}
               >
+                <AcudeImage
+                  src={acude.imageUrl}
+                  name={acude.name}
+                  className="mb-3 h-28 w-full rounded-lg"
+                />
                 <div className="flex items-center justify-between gap-2">
                   <Badge tone={acude.category === "sports" ? "teal" : "violet"}>
                     {CATEGORY_LABELS[acude.category]}
@@ -229,14 +236,15 @@ async function StudentDashboard({ user }: { user: AuthUser }) {
 }
 
 async function StaffDashboard({ user }: { user: AuthUser }) {
+  const teacherId = user.role === "manager" ? user.uid : undefined;
   const [occupation, acudes, activeEnrollments, scenarios, report, attendance] =
     await Promise.all([
-      getOccupation(todayKey()),
-      listLiveAcudes(),
-      listEnrollments({ status: "active" }),
+      getOccupation(todayKey(), undefined, new Date(), teacherId),
+      listLiveAcudes(teacherId ? { teacherId } : {}),
+      listEnrollments({ status: "active", ...(teacherId ? { teacherId } : {}) }),
       listScenarios(),
-      enrollmentReport({ groupBy: "date" }),
-      attendanceReport({ groupBy: "acude" }),
+      enrollmentReport({ groupBy: "date", ...(teacherId ? { teacherId } : {}) }),
+      attendanceReport({ groupBy: "acude", ...(teacherId ? { teacherId } : {}) }),
     ]);
   const now = occupation.scenarios.flatMap((item) => (item.current ? [item.current] : []));
   const free = occupation.scenarios.filter((item) => !item.current).length;
@@ -257,9 +265,11 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
             <Link href="/manager/reports" className={secondaryButtonClass}>
               Ver reportes
             </Link>
-            <Link href="/manager/acudes/new" className={buttonClass}>
-              Nuevo ACUDE
-            </Link>
+            {user.role === "admin" && (
+              <Link href="/manager/acudes/new" className={buttonClass}>
+                Nuevo ACUDE
+              </Link>
+            )}
           </>
         }
       />
@@ -290,6 +300,29 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
           tone="rose"
         />
       </div>
+
+      <section className={`${cardClass} mt-6 p-5`}>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Inscripciones por fecha</h2>
+            <p className="text-xs text-slate-500">Últimos 30 días</p>
+          </div>
+          <Link
+            href="/manager/reports?kind=enrollments"
+            className="text-xs font-semibold text-teal-700 hover:underline"
+          >
+            Abrir reporte
+          </Link>
+        </div>
+        {report.summary.total > 0 ? (
+          <ReportChart report={report} height={300} />
+        ) : (
+          <EmptyState
+            title="Sin eventos de inscripción"
+            description="Cuando existan inscripciones en el período, aparecerán en esta gráfica."
+          />
+        )}
+      </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <section className={`${cardClass} p-5`}>
@@ -384,7 +417,13 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["Gestionar ACUDES", "Crea grupos, horarios y cupos.", "/manager/acudes"],
+          [
+            user.role === "admin" ? "Gestionar ACUDES" : "Mi ACUDE",
+            user.role === "admin"
+              ? "Crea grupos, horarios y cupos."
+              : "Consulta el ACUDE que tienes asignado.",
+            "/manager/acudes",
+          ],
           ["Ocupación", "Consulta los grupos por escenario.", "/manager/occupation"],
           ["Asistencia", "Registra la asistencia de cada subgrupo.", "/manager/attendance"],
           ["Reportes", "Consulta eventos y asistencia.", "/manager/reports"],

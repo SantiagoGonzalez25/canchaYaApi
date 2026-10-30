@@ -128,18 +128,20 @@ export function EnrollmentPanel({
         })}
       </div>
 
-      <Field label="Sexo" hint="El formulario de inscripción debe registrar el sexo de la persona.">
-        <select name="sex" required defaultValue={userSex ?? ""} className={selectClass}>
-          <option value="" disabled>
-            Selecciona...
-          </option>
-          {Object.entries(SEX_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
+      {!userSex && (
+        <Field label="Sexo" hint="Solo se solicita si tu perfil aún no lo tiene registrado.">
+          <select name="sex" required defaultValue="" className={selectClass}>
+            <option value="" disabled>
+              Selecciona...
             </option>
-          ))}
-        </select>
-      </Field>
+            {Object.entries(SEX_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && <Alert kind="ok">{state.ok}</Alert>}

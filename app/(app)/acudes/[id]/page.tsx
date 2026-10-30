@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EnrollmentPanel } from "@/components/enrollment-panel";
+import { AcudeImage } from "@/components/acude-image";
 import { Badge, buttonClass, cardClass, PageHeader, ProgressBar, secondaryButtonClass } from "@/components/ui";
 import { getLiveAcude } from "@/lib/data/acudes";
 import { listMyActiveEnrollmentForAcude } from "@/lib/data/enrollments";
@@ -19,6 +20,7 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   });
+  if (user.role === "manager" && acude.teacherId !== user.uid) notFound();
   const existing =
     user.role === "student" ? await listMyActiveEnrollmentForAcude(user.uid, acude.id) : null;
 
@@ -45,6 +47,16 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
           )
         }
       />
+
+      {acude.imageUrl && (
+        <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200">
+          <AcudeImage
+            src={acude.imageUrl}
+            name={acude.name}
+            className="h-56 w-full sm:h-72"
+          />
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
         <div className="flex flex-col gap-6">

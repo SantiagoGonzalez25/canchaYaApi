@@ -264,15 +264,35 @@ export function AcudeForm({
                 placeholder="Carné, vestimenta, implementos..."
               />
             </Field>
-            <Field label="Imagen (URL opcional)" className="sm:col-span-2">
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(event) => setImageUrl(event.target.value)}
-                maxLength={500}
-                className={inputClass}
-                placeholder="https://..."
-              />
+            <Field
+              label="Imagen de portada"
+              hint="JPG, PNG o WebP. Máximo 2 MB. Se sube a Firebase Storage al guardar."
+              className="sm:col-span-2"
+            >
+              <div className="flex flex-col gap-2">
+                {imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imageUrl}
+                    alt={`Portada actual de ${name}`}
+                    className="h-32 w-52 rounded-lg border border-slate-200 object-cover"
+                  />
+                )}
+                <input
+                  type="file"
+                  name="imageFile"
+                  accept="image/jpeg,image/png,image/webp"
+                  className={`${inputClass} file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-teal-800`}
+                />
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(event) => setImageUrl(event.target.value)}
+                  maxLength={500}
+                  className={inputClass}
+                  placeholder="O pega una URL externa: https://..."
+                />
+              </div>
             </Field>
           </div>
         </section>

@@ -25,7 +25,12 @@ async function LiveList({ searchParams }: { searchParams: PageProps<"/acudes">["
   const q = first(params.q)?.trim().slice(0, 100) || undefined;
   const category = first(params.category) as keyof typeof CATEGORY_LABELS | undefined;
   const day = first(params.day) as (typeof WEEKDAYS)[number] | undefined;
-  const acudes = await listLiveAcudes({ q, category, day });
+  const acudes = await listLiveAcudes({
+    q,
+    category,
+    day,
+    ...(user.role === "manager" ? { teacherId: user.uid } : {}),
+  });
 
   return (
     <>

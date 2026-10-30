@@ -1,16 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f7f5;
-  --foreground: #0f172a;
-  --brand: #0f766e;
+  --background: #f7f9f2;
+  --foreground: #211915;
+  --tdea-lime: #92bd24;
+  --tdea-green: #00652e;
+  --tdea-green-light: #46b258;
+  --tdea-teal: #45a78f;
+  --tdea-dark: #1d4851;
+}
+
+@theme {
+  /* Paleta institucional TdeA aplicada sobre las utilidades teal/emerald. */
+  --color-teal-50: #f5f9e9;
+  --color-teal-100: #ebf3d3;
+  --color-teal-200: #d7e7a8;
+  --color-teal-300: #c1db77;
+  --color-teal-400: #a9cc4a;
+  --color-teal-500: #92bd24;
+  --color-teal-600: #7aa51d;
+  --color-teal-700: #00652e;
+  --color-teal-800: #004d23;
+  --color-teal-900: #003a1a;
+  --color-teal-950: #00220f;
+
+  --color-emerald-50: #f0f9f1;
+  --color-emerald-100: #dcf2df;
+  --color-emerald-200: #b9e5c0;
+  --color-emerald-300: #8dd399;
+  --color-emerald-400: #67c176;
+  --color-emerald-500: #46b258;
+  --color-emerald-600: #369e48;
+  --color-emerald-700: #2a7e39;
+  --color-emerald-800: #24652f;
+  --color-emerald-900: #1f5329;
+
+  --color-violet-50: #eef7f5;
+  --color-violet-100: #d9eeea;
+  --color-violet-200: #b3ddd5;
+  --color-violet-700: #1d4851;
+  --color-violet-800: #173a42;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-nunito), Verdana, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
@@ -19,22 +55,31 @@
 
 body {
   background:
-    radial-gradient(circle at 12% 0%, rgba(15, 118, 110, 0.08), transparent 32rem),
-    radial-gradient(circle at 88% 8%, rgba(37, 99, 235, 0.06), transparent 30rem),
+    radial-gradient(circle at 8% 0%, rgba(146, 189, 36, 0.12), transparent 30rem),
+    radial-gradient(circle at 92% 6%, rgba(69, 167, 143, 0.1), transparent 28rem),
     var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: "Verdana Pro", Verdana, Arial, sans-serif;
   min-height: 100vh;
 }
 
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+  font-family: var(--font-nunito), "Verdana Pro", Verdana, Arial, sans-serif;
+}
+
 ::selection {
-  background: rgba(15, 118, 110, 0.2);
+  background: rgba(146, 189, 36, 0.35);
+  color: #211915;
 }
 
 /* Scroll horizontal cómodo para el calendario en móvil. */
 .calendar-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(15, 118, 110, 0.35) transparent;
+  scrollbar-color: rgba(0, 101, 46, 0.35) transparent;
 }
 
 .calendar-scroll::-webkit-scrollbar {
@@ -42,7 +87,7 @@ body {
 }
 
 .calendar-scroll::-webkit-scrollbar-thumb {
-  background: rgba(15, 118, 110, 0.35);
+  background: rgba(0, 101, 46, 0.35);
   border-radius: 9999px;
 }
 
