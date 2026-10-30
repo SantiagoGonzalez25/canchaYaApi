@@ -349,6 +349,7 @@ function toAcude(seed: AcudeSeed): Acude {
     ...seed,
     currentEnrolled: 0,
     slotEnrolled: {},
+    imageStoragePath: null,
     semester: SEMESTER,
     attendanceMin: 80,
     createdBy: null,
@@ -431,7 +432,7 @@ const demoUsers: DemoUser[] = [
     key: "manager",
     email: "gestor@canchaya.demo",
     password: "Gestor1234!",
-    name: "Gestor de ACUDES",
+    name: "Profesor de ACUDES",
     role: "manager",
     sex: "female",
   },
@@ -610,49 +611,80 @@ function pastDatesForDay(day: Weekday, count: number): string[] {
   return dates;
 }
 
+async function clearDemoAttendance(adminUid: string) {
+  const snap = await db.collection("attendance").where("recordedBy", "==", adminUid).get();
+  if (snap.empty) return;
+  const batch = db.batch();
+  snap.docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+  console.log(`- ${snap.size} registros de asistencia demo anteriores`);
+}
+
 async function seedDemoAttendance(
   enrollments: Enrollment[],
   adminUid: string,
 ) {
+  await clearDemoAttendance(adminUid);
   const batch = db.batch();
-  const statuses: AttendanceStatus[] = ["present", "present", "present", "late", "absent", "excused"];
   let total = 0;
   enrollments.forEach((enrollment, enrollmentIndex) => {
-    const dates = pastDatesForDay(enrollment.day, 3);
-    dates.forEach((date, sessionIndex) => {
-      const status = statuses[(enrollmentIndex + sessionIndex) % statuses.length];
-      const id = `${enrollment.id}_${date}`;
-      const record: AttendanceRecord = {
-        id,
-        acudeId: enrollment.acudeId,
-        acudeName: enrollment.acudeName,
-        slotId: enrollment.slotId,
-        enrollmentId: enrollment.id,
-        userId: enrollment.userId,
-        userName: enrollment.userName,
-        userSex: enrollment.userSex,
-        category: enrollment.category,
-        discipline: enrollment.discipline,
-        teacherId: enrollment.teacherId,
-        teacherName: enrollment.teacherName,
-        scenarioId: enrollment.scenarioId,
-        scenarioName: enrollment.scenarioName,
-        day: enrollment.day,
-        startTime: enrollment.startTime,
-        endTime: enrollment.endTime,
-        date,
-        status,
-        notes: status === "excused" ? "Excusa médica presentada." : "",
-        recordedBy: adminUid,
-        recordedAt: `${date}T16:30:00.000Z`,
-        updatedAt: `${date}T16:30:00.000Z`,
-      };
-      batch.set(db.collection("attendance").doc(id), record, { merge: true });
-      total += 1;
-    });
+    const date = pastDatesForDay(enrollment.day, 1)[0];
+    if (!date) return;
+    const status: AttendanceStatus = enrollmentIndex % 3 === 0 ? "absent" : "present";
+    const id = `${enrollment.id}_${date}`;
+    const record: AttendanceRecord = {
+      id,
+      acudeId: enrollment.acudeId,
+      acudeName: enrollment.acudeName,
+      slotId: enrollment.slotId,
+      enrollmentId: enrollment.id,
+      userId: enrollment.userId,
+      userName: enrollment.userName,
+      userEmail: enrollment.userEmail,
+      userSex: enrollment.userSex,
+      category: enrollment.category,
+      discipline: enrollment.discipline,
+      teacherId: enrollment.teacherId,
+      teacherName: enrollment.teacherName,
+      scenarioId: enrollment.scenarioId,
+      scenarioName: enrollment.scenarioName,
+      day: enrollment.day,
+      startTime: enrollment.startTime,
+      endTime: enrollment.endTime,
+      date,
+      status,
+      notes: "",
+      recordedBy: adminUid,
+      recordedAt: `${date}T16:30:00.000Z`,
+      updatedAt: `${date}T16:30:00.000Z`,
+    };
+    batch.set(db.collection("attendance").doc(id), record, { merge: true });
+    total += 1;
   });
   await batch.commit();
   console.log(`+ ${total} registros de asistencia demo`);
+}
+
+async function assignDemoTeacher(
+  users: Map<string, { uid: string; user: DemoUser }>,
+) {
+  const manager = users.get("manager");
+  if (!manager) return;
+  const acudeId = "futsal-formativo";
+  const teacherName = manager.user.name;
+  await db.collection("acudes").doc(acudeId).update({
+    teacherId: manager.uid,
+    teacherName,
+    updatedAt: NOW,
+  });
+  for (const collection of ["enrollments", "attendance"]) {
+    const snap = await db.collection(collection).where("acudeId", "==", acudeId).get();
+    if (snap.empty) continue;
+    const batch = db.batch();
+    snap.docs.forEach((doc) => batch.update(doc.ref, { teacherId: manager.uid, teacherName }));
+    await batch.commit();
+  }
+  console.log(`+ ACUDE ${acudeId} asignado al profesor ${manager.user.email}`);
 }
 
 async function runDemo() {
@@ -662,6 +694,7 @@ async function runDemo() {
   console.log(`+ ${active.length} inscripciones activas demo`);
   const adminUid = users.get("admin")?.uid ?? "seed";
   await seedDemoAttendance(active, adminUid);
+  await assignDemoTeacher(users);
   await recomputeCounts();
   console.log("\nCuentas demo:");
   for (const user of demoUsers) {

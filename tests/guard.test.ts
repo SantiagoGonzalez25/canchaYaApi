@@ -8,7 +8,7 @@ vi.mock("@/lib/services/auth", () => ({
   verifySessionCookie: (cookie: string) => verifySessionCookie(cookie),
 }));
 
-import { assertRole, requireUser } from "@/lib/guard";
+import { assertRole, requireAdmin, requireUser } from "@/lib/guard";
 
 const request = (authorization?: string, cookie?: string) =>
   new Request("http://x/api", {
@@ -53,6 +53,7 @@ describe("requireUser", () => {
 
 describe("assertRole", () => {
   const student = { uid: "u1", email: "a@b.co", name: "Ana", role: "student" as const, sex: null };
+  const manager = { uid: "u2", email: "g@b.co", name: "G", role: "manager" as const, sex: null };
   it("permite el rol correcto", () => {
     expect(() => assertRole(student, "student")).not.toThrow();
   });
@@ -67,5 +68,8 @@ describe("assertRole", () => {
       expect(error).toBeInstanceOf(ApiError);
       expect((error as ApiError).status).toBe(403);
     }
+  });
+  it("solo el admin pasa requireAdmin", () => {
+    expect(() => requireAdmin(manager)).toThrow(ApiError);
   });
 });

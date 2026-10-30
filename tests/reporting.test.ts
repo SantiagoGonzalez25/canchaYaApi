@@ -43,6 +43,7 @@ function attendance(overrides: Partial<AttendanceRecord>): AttendanceRecord {
     enrollmentId: "e1",
     userId: "u1",
     userName: "Ana",
+    userEmail: "ana@tdea.edu.co",
     userSex: "female",
     category: "sports",
     discipline: "Fútbol sala",
@@ -70,6 +71,7 @@ describe("buildEnrollmentReport", () => {
     enrollment({ id: "e1" }),
     enrollment({
       id: "e2",
+      userId: "u2",
       acudeId: "teatro",
       acudeName: "Teatro",
       category: "cultural",
@@ -122,34 +124,51 @@ describe("buildEnrollmentReport", () => {
     expect(report.summary.total).toBe(0);
     expect(report.series.every((series) => series.points.length === 0)).toBe(true);
   });
+
+  it("filtra y agrupa por nombre o correo del estudiante", () => {
+    const filtered = buildEnrollmentReport(items, { student: "santiago" }, "date", now);
+    expect(filtered.summary.total).toBe(1);
+
+    const grouped = buildEnrollmentReport(items, {}, "student", now);
+    const labels = grouped.series.flatMap((series) => series.points.map((point) => point.label));
+    expect(labels).toContain("Ana");
+    expect(labels).toContain("Santiago");
+  });
 });
 
 describe("buildAttendanceReport", () => {
   const items = [
     attendance({ id: "a1", status: "present" }),
-    attendance({ id: "a2", status: "present", userName: "Santiago", userSex: "male" }),
-    attendance({ id: "a3", status: "late" }),
+    attendance({
+      id: "a2",
+      status: "present",
+      userId: "u2",
+      userName: "Santiago",
+      userEmail: "santiago@tdea.edu.co",
+      userSex: "male",
+    }),
+    attendance({ id: "a3", status: "present" }),
     attendance({ id: "a4", status: "absent" }),
     attendance({
       id: "a5",
       acudeId: "teatro",
       acudeName: "Teatro",
       category: "cultural",
-      status: "excused",
+      status: "absent",
     }),
   ];
 
-  it("calcula la tasa de asistencia efectiva", () => {
+  it("calcula la tasa de asistencia con dos estados", () => {
     const report = buildAttendanceReport(items, {}, "acude", now);
     expect(report.kind).toBe("attendance");
     expect(report.summary.total).toBe(5);
-    expect(report.summary.present).toBe(2);
-    expect(report.summary.late).toBe(1);
-    expect(report.summary.absent).toBe(1);
+    expect(report.summary.present).toBe(3);
+    expect(report.summary.absent).toBe(2);
     expect(report.summary.attendanceRate).toBe(60);
+    expect(report.series).toHaveLength(2);
   });
 
-  it("agrupa por ACUDE y por sexo", () => {
+  it("agrupa por ACUDE, por sexo y por estudiante", () => {
     const byAcude = buildAttendanceReport(items, {}, "acude", now);
     const present = byAcude.series.find((series) => series.name === "Asistió")!;
     expect(present.points.map((point) => point.label)).toContain("Fútbol sala");
@@ -159,11 +178,18 @@ describe("buildAttendanceReport", () => {
       .find((series) => series.name === "Asistió")!
       .points.find((point) => point.label === "Masculino");
     expect(male?.value).toBe(1);
+
+    const byStudent = buildAttendanceReport(items, {}, "student", now);
+    const labels = byStudent.series.flatMap((series) => series.points.map((point) => point.label));
+    expect(labels).toContain("Santiago");
   });
 
-  it("filtra por estado de asistencia", () => {
+  it("filtra por estado de asistencia y por nombre/correo", () => {
     const report = buildAttendanceReport(items, { status: "absent" }, "acude", now);
-    expect(report.summary.total).toBe(1);
-    expect(report.summary.absent).toBe(1);
+    expect(report.summary.total).toBe(2);
+    expect(report.summary.absent).toBe(2);
+
+    const byStudent = buildAttendanceReport(items, { student: "Santiago" }, "acude", now);
+    expect(byStudent.summary.total).toBe(1);
   });
 });

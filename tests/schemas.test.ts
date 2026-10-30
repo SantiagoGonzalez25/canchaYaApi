@@ -109,14 +109,14 @@ describe("createEnrollmentSchema", () => {
       }).success,
     ).toBe(false);
   });
-  it("exige sexo", () => {
+  it("permite omitir el sexo si el perfil ya lo tiene", () => {
     expect(
       createEnrollmentSchema.safeParse({
         acudeId: "futsal-formativo",
         slotId: "futsal-tue",
         clientRequestId: "abcdefgh",
       }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 
@@ -179,9 +179,17 @@ describe("saveAttendanceSchema", () => {
         acudeId: "futsal-formativo",
         slotId: "futsal-tue",
         date: "2026-10-20",
-        records: [{ enrollmentId: "e1", status: "present", notes: "" }],
+        records: [{ enrollmentId: "e1", status: "absent", notes: "" }],
       }).success,
     ).toBe(true);
+    expect(
+      saveAttendanceSchema.safeParse({
+        acudeId: "futsal-formativo",
+        slotId: "futsal-tue",
+        date: "2026-10-20",
+        records: [{ enrollmentId: "e1", status: "late" }],
+      }).success,
+    ).toBe(false);
     expect(
       saveAttendanceSchema.safeParse({
         acudeId: "futsal-formativo",
@@ -202,7 +210,13 @@ describe("reportQuerySchema", () => {
   it("acepta estados de inscripción y de asistencia", () => {
     expect(reportQuerySchema.safeParse({ status: "active" }).success).toBe(true);
     expect(reportQuerySchema.safeParse({ status: "present" }).success).toBe(true);
+    expect(reportQuerySchema.safeParse({ status: "late" }).success).toBe(false);
     expect(reportQuerySchema.safeParse({ status: "otro" }).success).toBe(false);
+  });
+  it("acepta búsqueda por estudiante y agrupación por estudiante", () => {
+    const parsed = reportQuerySchema.parse({ student: "Ana", groupBy: "student" });
+    expect(parsed.student).toBe("Ana");
+    expect(parsed.groupBy).toBe("student");
   });
 });
 
