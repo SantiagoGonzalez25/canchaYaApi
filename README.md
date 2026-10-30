@@ -35,6 +35,7 @@ Abre `http://localhost:3000`. La documentación interactiva está en `/api/docs`
 | `FIREBASE_CLIENT_EMAIL` | Cuenta de servicio |
 | `FIREBASE_PRIVATE_KEY` | Llave privada (con `\n` escapados) |
 | `FIREBASE_WEB_API_KEY` | Login con la API REST de Firebase Auth |
+| `FIREBASE_STORAGE_BUCKET` | Opcional: bucket para imágenes de ACUDES |
 
 Nunca subas `.env` ni el JSON de la cuenta de servicio. Firestore debe tener reglas que nieguen todo acceso directo de clientes (`firestore.rules`).
 
@@ -50,8 +51,10 @@ Solo si ejecutaste `pnpm seed:demo`:
 | --- | --- | --- |
 | Estudiante | `estudiante1@canchaya.demo` | `Demo1234!` |
 | Estudiante | `estudiante2@canchaya.demo` … `estudiante5@canchaya.demo` | `Demo1234!` |
-| Gestor | `gestor@canchaya.demo` | `Gestor1234!` |
+| Profesor | `gestor@canchaya.demo` | `Gestor1234!` |
 | Admin | `admin@canchaya.demo` | `Admin1234!` |
+
+El profesor demo tiene asignado el ACUDE **Fútbol sala formativo**.
 
 ## Scripts
 
@@ -70,9 +73,9 @@ Solo si ejecutaste `pnpm seed:demo`:
 
 ## Roles
 
-- **student**: cartelera, calendario, inscripción, ajustes, cancelación y “Mis ACUDES”.
-- **manager**: CRUD de ACUDES/escenarios, panel de ocupación, asistencia, reportes y perfil institucional.
-- **admin**: todo lo del gestor + creación de gestores.
+- **student**: cartelera, calendario (inicia en “Mis ACUDES”), inscripción, ajustes, cancelación y “Mis ACUDES”.
+- **manager** (profesor): solo ve el ACUDE asignado, su asistencia y sus reportes. No crea ACUDES ni escenarios.
+- **admin**: crea ACUDES, profesores, asigna horarios, sube imágenes y ve toda la información.
 
 El registro público **siempre** crea estudiantes. Los roles viajan como *custom claims* dentro del `idToken`.
 
@@ -85,21 +88,23 @@ El registro público **siempre** crea estudiantes. Los roles viajan como *custom
 | POST | `/api/auth/login` | público | Login; devuelve `idToken` y `refreshToken` |
 | POST | `/api/auth/refresh` | público | Renueva el `idToken` |
 | GET | `/api/auth/me` | autenticado | Usuario y rol |
-| POST | `/api/auth/manager-register` | admin | Crea un gestor |
-| GET | `/api/acudes/live?q=&category=&day=&updatedSince=` | autenticado | Cartelera en tiempo real |
-| GET | `/api/acudes?status=&category=&q=&updatedSince=` | gestor/admin | Listado de gestión |
-| POST | `/api/acudes` | gestor/admin | Crear ACUDE (bloquea cruces) |
-| GET/PUT/DELETE | `/api/acudes/:id` | autenticado / gestor | Detalle, edición y archivado |
+| POST | `/api/auth/manager-register` | admin | Crea un profesor |
+| GET | `/api/acudes/live?q=&category=&day=&updatedSince=` | autenticado | Cartelera (profesor: solo su ACUDE) |
+| GET | `/api/acudes?status=&category=&q=&updatedSince=` | profesor/admin | Listado filtrado por rol |
+| POST | `/api/acudes` | admin | Crear ACUDE (bloquea cruces) |
+| GET | `/api/acudes/:id` | autenticado | Detalle (profesor: solo el suyo) |
+| PUT/DELETE | `/api/acudes/:id` | admin | Edición y archivado |
+| GET | `/api/acudes/:id/image` | público | Imagen del ACUDE |
 | GET | `/api/scenarios` | autenticado | Escenarios |
-| POST/PUT/DELETE | `/api/scenarios...` | gestor/admin | CRUD de escenarios |
-| GET | `/api/scenarios/occupation?date=&day=` | gestor/admin | Ocupación por escenario |
-| POST | `/api/enrollments` | estudiante | Inscripción idempotente |
-| GET | `/api/enrollments/me?status=&updatedSince=` | autenticado | Mis inscripciones |
-| PATCH | `/api/enrollments/:id/cancel` | dueño/gestor | Cancela y libera cupo |
-| GET | `/api/enrollments?...` | gestor/admin | Todas las inscripciones |
-| GET/POST | `/api/attendance` | gestor/admin | Consulta y registro masivo de asistencia |
-| GET | `/api/reports/enrollments` | gestor/admin | Reporte de eventos por todos los campos + fechas |
-| GET | `/api/reports/attendance` | gestor/admin | Reporte de asistencia por ACUDE |
+| POST/PUT/DELETE | `/api/scenarios...` | admin | CRUD de escenarios |
+| GET | `/api/scenarios/occupation?date=&day=` | profesor/admin | Ocupación filtrada por rol |
+| POST | `/api/enrollments` | estudiante | Inscripción idempotente (sexo del perfil) |
+| GET | `/api/enrollments/me` | autenticado | Mis inscripciones |
+| PATCH | `/api/enrollments/:id/cancel` | dueño/admin | Cancela y libera cupo |
+| GET | `/api/enrollments?...` | profesor/admin | Inscripciones filtradas por rol |
+| GET/POST | `/api/attendance` | profesor/admin | Asistencia (asistió / no asistió) |
+| GET | `/api/reports/enrollments` | profesor/admin | Reporte por todos los campos + fechas |
+| GET | `/api/reports/attendance` | profesor/admin | Reporte por ACUDE y estudiante |
 | GET | `/api/openapi.json` | público | Especificación OpenAPI 3.1 |
 | GET | `/api/docs` | público | Swagger UI |
 
@@ -132,8 +137,10 @@ Todos los errores tienen la forma:
 - **Mis ACUDES** con cancelación inmediata.
 - **Panel de ocupación** con estado en vivo por escenario (en curso, próxima, finalizada) y barra de ocupación.
 - **Gestión de ACUDES** con editor dinámico de franjas y validación de cruces en el servidor.
-- **Asistencia** con lista de inscritos, estados (asistió, tarde, ausente, excusa), notas y guardado masivo.
-- **Reportes Highcharts** de eventos de inscripción y asistencia, filtrables por todos los campos del formulario y por fechas, con agrupación configurable y exportación CSV.
+- **Asistencia** con nombre, correo institucional y dos estados: asistió / no asistió. Sin valores por defecto y con guardado bloqueado hasta completar la lista.
+- **Reportes Highcharts** de eventos de inscripción y asistencia, filtrables por fechas, nombre/correo, ACUDE y demás campos, con agrupación por estudiante y exportación CSV.
+- **Imágenes de ACUDES** subidas por el administrador. Si Storage no está habilitado, se usa un respaldo en Firestore o una URL externa.
+- **Identidad TdeA** con colores institucionales, Nunito Sans, Verdana y logo oficial.
 
 ## Estructura
 
