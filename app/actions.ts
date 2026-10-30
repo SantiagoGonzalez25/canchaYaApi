@@ -3,7 +3,14 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { archiveAcude, createAcude, updateAcude, updateAcudeImage } from "@/lib/data/acudes";
+import {
+  archiveAcude,
+  clearAcudeImage,
+  createAcude,
+  updateAcude,
+  updateAcudeImage,
+} from "@/lib/data/acudes";
+import { deleteAcudeImageBase64 } from "@/lib/data/acude-images";
 import { saveAttendance } from "@/lib/data/attendance";
 import { cancelEnrollment, createEnrollment } from "@/lib/data/enrollments";
 import { createScenario, deleteScenario, updateScenario } from "@/lib/data/scenarios";
@@ -24,7 +31,7 @@ import {
   login,
   register,
 } from "@/lib/services/auth";
-import { uploadAcudeImage } from "@/lib/services/storage";
+import { deleteStorageImage, uploadAcudeImage } from "@/lib/services/storage";
 import {
   clearSessionCookie,
   requireWebStaff,
@@ -172,11 +179,25 @@ export async function saveAcudeAction(_prev: FormState, formData: FormData): Pro
       ? await updateAcude(id, parsed.data, user)
       : await createAcude(parsed.data, user);
     savedId = acude.id;
-
+    const removeImage = formData.get("removeImage") === "1";
     const imageFile = formData.get("imageFile");
-    if (imageFile instanceof File && imageFile.size > 0) {
+
+    if (removeImage) {
+      await clearAcudeImage(acude.id);
+      await deleteAcudeImageBase64(acude.id);
+      if (acude.imageStoragePath) await deleteStorageImage(acude.imageStoragePath);
+    } else if (imageFile instanceof File && imageFile.size > 0) {
       const image = await uploadAcudeImage(acude.id, imageFile);
       await updateAcudeImage(acude.id, image.url, image.path);
+      if (image.path) await deleteAcudeImageBase64(acude.id);
+      if (acude.imageStoragePath && acude.imageStoragePath !== image.path) {
+        await deleteStorageImage(acude.imageStoragePath);
+      }
+    } else if (!parsed.data.imageUrl) {
+      // El administrador borró la URL externa y no subió un archivo.
+      await clearAcudeImage(acude.id);
+      await deleteAcudeImageBase64(acude.id);
+      if (acude.imageStoragePath) await deleteStorageImage(acude.imageStoragePath);
     }
 
     revalidatePath("/manager/acudes");

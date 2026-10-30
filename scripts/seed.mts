@@ -161,7 +161,7 @@ const acudesSeed: AcudeSeed[] = [
     ],
     maxCapacity: 25,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/futsal.webp",
     requirements: "Carné TdeA, calzado de suela lisa e hidratación personal.",
   },
   {
@@ -180,7 +180,7 @@ const acudesSeed: AcudeSeed[] = [
     ],
     maxCapacity: 20,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/danza-contemporanea.webp",
     requirements: "Ropa elástica, medias de danza o pies descalzos.",
   },
   {
@@ -199,7 +199,7 @@ const acudesSeed: AcudeSeed[] = [
     ],
     maxCapacity: 22,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/danza-folclorica.webp",
     requirements: "Ropa cómoda y pañuelo tradicional para las prácticas.",
   },
   {
@@ -218,7 +218,7 @@ const acudesSeed: AcudeSeed[] = [
     ],
     maxCapacity: 30,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/teatro.webp",
     requirements: "Ropa cómoda y disponibilidad para el montaje final.",
   },
   {
@@ -237,7 +237,7 @@ const acudesSeed: AcudeSeed[] = [
     ],
     maxCapacity: 18,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/natacion.webp",
     requirements: "Vestido de baño, gorro, gafas y certificado de aptitud física.",
   },
   {
@@ -256,7 +256,7 @@ const acudesSeed: AcudeSeed[] = [
     ],
     maxCapacity: 24,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/baloncesto.webp",
     requirements: "Calzado deportivo y balón propio opcional.",
   },
   {
@@ -272,7 +272,7 @@ const acudesSeed: AcudeSeed[] = [
     schedule: [slot("ajedrez-fri", "friday", "10:00", "12:00", "salon-cultural")],
     maxCapacity: 20,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/ajedrez.webp",
     requirements: "Tablero propio opcional. Se prestan tableros institucionales.",
   },
   {
@@ -291,7 +291,7 @@ const acudesSeed: AcudeSeed[] = [
     ],
     maxCapacity: 25,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/yoga.webp",
     requirements: "Colchoneta o toalla personal y ropa cómoda.",
   },
   {
@@ -307,7 +307,7 @@ const acudesSeed: AcudeSeed[] = [
     schedule: [slot("musica-tue", "tuesday", "10:00", "12:00", "auditorio")],
     maxCapacity: 30,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/musica.webp",
     requirements: "Instrumento propio si lo tienes; audición informal en la primera sesión.",
   },
   {
@@ -323,7 +323,7 @@ const acudesSeed: AcudeSeed[] = [
     schedule: [slot("senderismo-sat", "saturday", "08:00", "11:00", "cancha-futbol")],
     maxCapacity: 30,
     status: "published",
-    imageUrl: null,
+    imageUrl: "/images/acudes/senderismo.webp",
     requirements: "Calzado de caminata, hidratación y bloqueador solar.",
   },
   {
@@ -339,7 +339,7 @@ const acudesSeed: AcudeSeed[] = [
     schedule: [slot("foto-sun", "sunday", "09:00", "11:00", "salon-cultural")],
     maxCapacity: 15,
     status: "draft",
-    imageUrl: null,
+    imageUrl: "/images/acudes/fotografia.webp",
     requirements: "Cámara o celular con cámara.",
   },
 ];

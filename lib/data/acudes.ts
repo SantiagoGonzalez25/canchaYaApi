@@ -450,6 +450,24 @@ export async function updateAcudeImage(
   return toAcude(id, data);
 }
 
+/** Elimina la referencia visual de la portada. */
+export async function clearAcudeImage(id: string): Promise<Acude> {
+  const ref = db().collection(ACUDES).doc(id);
+  const snap = await ref.get();
+  if (!snap.exists || !isAcudeDocument(snap.data())) {
+    throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
+  }
+  const now = new Date().toISOString();
+  const data = {
+    ...(snap.data() as AcudeDoc),
+    imageUrl: null,
+    imageStoragePath: null,
+    updatedAt: now,
+  };
+  await ref.set(data, { merge: true });
+  return toAcude(id, data);
+}
+
 /** Datos de apoyo para formularios del panel: escenarios disponibles. */
 export async function listScenarioOptions(): Promise<Scenario[]> {
   const snap = await db().collection("scenarios").get();

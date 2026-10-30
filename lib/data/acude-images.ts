@@ -33,6 +33,10 @@ export async function saveAcudeImageBase64(
   return `/api/acudes/${acudeId}/image?v=${version}`;
 }
 
+export async function deleteAcudeImageBase64(acudeId: string): Promise<void> {
+  await db().collection(ACUDE_IMAGES).doc(acudeId).delete();
+}
+
 export async function getAcudeImageBase64(
   acudeId: string,
 ): Promise<{ contentType: string; data: string }> {

@@ -14,6 +14,16 @@ export interface UploadedImage {
   path: string;
 }
 
+/** Elimina un objeto de Storage sin romper si ya no existe. */
+export async function deleteStorageImage(path: string): Promise<void> {
+  if (!path) return;
+  try {
+    await storageBucket().file(path).delete({ ignoreNotFound: true });
+  } catch (error) {
+    console.warn("[storage] no se pudo eliminar la imagen anterior:", error);
+  }
+}
+
 /**
  * Sube la portada de un ACUDE a Firebase Storage.
  * Se guarda una URL de descarga con token para que la imagen se pueda mostrar

@@ -15,6 +15,7 @@ import {
   Alert,
   buttonClass,
   cardClass,
+  dangerButtonClass,
   Field,
   inputClass,
   secondaryButtonClass,
@@ -266,7 +267,7 @@ export function AcudeForm({
             </Field>
             <Field
               label="Imagen de portada"
-              hint="JPG, PNG o WebP. Máximo 2 MB. Se sube a Firebase Storage al guardar."
+              hint="JPG, PNG o WebP. Hasta 2 MB con Storage; el respaldo gratuito acepta hasta 500 KB."
               className="sm:col-span-2"
             >
               <div className="flex flex-col gap-2">
@@ -292,6 +293,21 @@ export function AcudeForm({
                   className={inputClass}
                   placeholder="O pega una URL externa: https://..."
                 />
+                {initialAcude?.imageUrl && (
+                  <button
+                    type="submit"
+                    name="removeImage"
+                    value="1"
+                    className={dangerButtonClass}
+                    onClick={(event) => {
+                      if (!window.confirm("¿Eliminar la imagen actual del ACUDE?")) {
+                        event.preventDefault();
+                      }
+                    }}
+                  >
+                    Eliminar imagen actual
+                  </button>
+                )}
               </div>
             </Field>
           </div>
