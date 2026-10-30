@@ -15,10 +15,14 @@ import {
   addDays,
   formatDate,
   isDateKey,
+  isWithinSemester,
   SCENARIO_STATUS_LABELS,
   SCENARIO_TYPE_LABELS,
+  SEMESTER_LABEL,
+  startOfWeek,
   todayKey,
   WEEKDAY_LABELS,
+  weekdayOf,
 } from "@/lib/labels";
 import type { OccupationSession, SessionPhase } from "@/lib/types";
 import { requirePageStaff } from "@/lib/web/session";
@@ -28,13 +32,6 @@ export const metadata: Metadata = { title: "Panel de ocupación" };
 const first = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value;
 
-const PHASE_LABEL: Record<SessionPhase, string> = {
-  in_session: "En curso",
-  upcoming: "Próxima",
-  finished: "Finalizada",
-  scheduled: "Programada",
-};
-
 const PHASE_TONE: Record<SessionPhase, "teal" | "amber" | "neutral" | "blue"> = {
   in_session: "teal",
   upcoming: "amber",
@@ -42,37 +39,58 @@ const PHASE_TONE: Record<SessionPhase, "teal" | "amber" | "neutral" | "blue"> = 
   scheduled: "blue",
 };
 
-function SessionRow({ session }: { session: OccupationSession }) {
+function phaseLabel(session: OccupationSession, date: string, today: string): string {
+  if (session.phase === "in_session") return "En clase ahora";
+  if (session.phase === "upcoming") return "Próxima";
+  if (session.phase === "finished") {
+    return date === today ? "Ya pasó hoy" : "Día pasado";
+  }
+  return "Programada";
+}
+
+function SessionRow({
+  session,
+  date,
+  today,
+}: {
+  session: OccupationSession;
+  date: string;
+  today: string;
+}) {
   return (
-    <li
-      className={`rounded-xl border p-3 ${
-        session.phase === "in_session"
-          ? "border-teal-300 bg-teal-50/70"
-          : "border-slate-200 bg-white"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-xs font-black text-slate-800">
-            {session.startTime}–{session.endTime}
-          </p>
-          <p className="mt-1 truncate text-sm font-bold text-slate-900">{session.acudeName}</p>
-          <p className="text-[11px] text-slate-500">{session.teacherName}</p>
+    <li>
+      <Link
+        href={`/acudes/${session.acudeId}`}
+        className={`block rounded-xl border p-3 transition hover:border-teal-300 hover:shadow-sm ${
+          session.phase === "in_session"
+            ? "border-teal-300 bg-teal-50/70"
+            : "border-slate-200 bg-white"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-xs font-black text-slate-800">
+              {session.startTime}–{session.endTime}
+            </p>
+            <p className="mt-1 truncate text-sm font-bold text-slate-900">{session.acudeName}</p>
+            <p className="text-[11px] text-slate-500">{session.teacherName}</p>
+          </div>
+          <Badge tone={PHASE_TONE[session.phase]}>{phaseLabel(session, date, today)}</Badge>
         </div>
-        <Badge tone={PHASE_TONE[session.phase]}>{PHASE_LABEL[session.phase]}</Badge>
-      </div>
-      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
-        <span>
-          {session.enrolled}/{session.capacity} inscritos
-        </span>
-        <span>{session.occupancyPct}%</span>
-      </div>
-      <div className="mt-1">
-        <ProgressBar
-          value={session.occupancyPct}
-          tone={session.occupancyPct >= 90 ? "rose" : session.occupancyPct >= 60 ? "amber" : "teal"}
-        />
-      </div>
+        <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+          <span>
+            {session.enrolled}/{session.capacity} inscritos
+          </span>
+          <span>{session.occupancyPct}%</span>
+        </div>
+        <div className="mt-1">
+          <ProgressBar
+            value={session.occupancyPct}
+            tone={session.occupancyPct >= 90 ? "rose" : session.occupancyPct >= 60 ? "amber" : "teal"}
+          />
+        </div>
+        <p className="mt-2 text-[11px] font-semibold text-teal-700">Ver ficha del ACUDE</p>
+      </Link>
     </li>
   );
 }
@@ -97,6 +115,9 @@ async function OccupationContent({
   );
   const free = occupation.scenarios.filter((item) => !item.current).length;
   const sessions = occupation.scenarios.reduce((sum, item) => sum + item.sessions.length, 0);
+  const today = todayKey();
+  const weekStart = startOfWeek(date);
+  const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 
   return (
     <>
@@ -135,8 +156,38 @@ async function OccupationContent({
           <p className="text-[11px] uppercase tracking-wide text-teal-700">
             {WEEKDAY_LABELS[occupation.day]}
           </p>
+          <p className="text-[10px] text-slate-400">{SEMESTER_LABEL}</p>
         </div>
       </div>
+
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:grid-cols-7">
+        {weekDays.map((day) => {
+          const isActive = day === date;
+          return (
+            <Link
+              key={day}
+              href={`/manager/occupation?date=${day}`}
+              className={`rounded-xl border px-2 py-2 text-center transition ${
+                isActive
+                  ? "border-teal-600 bg-teal-700 text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-teal-300"
+              }`}
+            >
+              <span className={`block text-[10px] font-bold uppercase ${isActive ? "text-teal-100" : "text-slate-400"}`}>
+                {WEEKDAY_LABELS[weekdayOf(day)]}
+              </span>
+              <span className="block text-sm font-black">{day.slice(8, 10)}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {!isWithinSemester(date) && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Esta fecha está fuera del semestre {SEMESTER_LABEL}. El ACUDE sigue activo durante el
+          período académico; esta vista solo muestra la sesión del día seleccionado.
+        </div>
+      )}
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Escenarios" value={occupation.scenarios.length} />
@@ -154,6 +205,10 @@ async function OccupationContent({
         <p className="mt-1 text-xs leading-relaxed text-teal-800">
           La ocupación se calcula con los ACUDES publicados y sus inscripciones activas. Un escenario
           aparece ocupado porque un grupo tiene una franja programada.
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-teal-800">
+          “Ya pasó hoy” y “Día pasado” describen la sesión del día seleccionado. El ACUDE continúa
+          activo durante todo el semestre hasta el 22/11/2026.
         </p>
       </div>
 
@@ -200,7 +255,12 @@ async function OccupationContent({
               ) : (
                 <ul className="flex flex-col gap-2">
                   {item.sessions.map((session) => (
-                    <SessionRow key={`${session.slotId}-${session.acudeId}`} session={session} />
+                    <SessionRow
+                      key={`${session.slotId}-${session.acudeId}`}
+                      session={session}
+                      date={date}
+                      today={today}
+                    />
                   ))}
                 </ul>
               )}

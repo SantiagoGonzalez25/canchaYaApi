@@ -6,7 +6,6 @@ import { saveAcudeAction, type FormState } from "@/app/actions";
 import {
   ACUDE_STATUS_LABELS,
   CATEGORY_LABELS,
-  SCENARIO_STATUS_LABELS,
   WEEKDAYS,
   WEEKDAY_LABELS,
 } from "@/lib/labels";
@@ -68,11 +67,8 @@ export function AcudeForm({
   const [description, setDescription] = useState(initialAcude?.description ?? "");
   const [category, setCategory] = useState<AcudeCategory>(initialAcude?.category ?? "sports");
   const [discipline, setDiscipline] = useState(initialAcude?.discipline ?? "");
-  const [teacherId, setTeacherId] = useState(initialAcude?.teacherId ?? "");
-  const [teacherName, setTeacherName] = useState(initialAcude?.teacherName ?? "");
-  const [scenarioId, setScenarioId] = useState(
-    initialAcude?.scenarioId ?? scenarios[0]?.id ?? "",
-  );
+  const [teacherId, setTeacherId] = useState(initialAcude?.teacherId ?? "pending");
+  const [teacherName, setTeacherName] = useState(initialAcude?.teacherName ?? "Por asignar");
   const [maxCapacity, setMaxCapacity] = useState(String(initialAcude?.maxCapacity ?? 20));
   const [status, setStatus] = useState<AcudeStatus>(initialAcude?.status ?? "draft");
   const [semester, setSemester] = useState(initialAcude?.semester ?? defaultSemester);
@@ -104,7 +100,7 @@ export function AcudeForm({
     discipline,
     teacherId,
     teacherName,
-    scenarioId,
+    scenarioId: schedule[0]?.scenarioId ?? "",
     schedule: schedule.map((row) => ({
       ...(row.id ? { id: row.id } : {}),
       day: row.day,
@@ -174,23 +170,6 @@ export function AcudeForm({
                 placeholder="Fútbol sala, danza, teatro..."
               />
             </Field>
-            <Field label="Escenario principal" hint="Debe aparecer en al menos una franja.">
-              <select
-                value={scenarioId}
-                onChange={(event) => setScenarioId(event.target.value)}
-                required
-                className={selectClass}
-              >
-                <option value="" disabled>
-                  Selecciona un escenario
-                </option>
-                {scenarios.map((scenario) => (
-                  <option key={scenario.id} value={scenario.id}>
-                    {scenario.name} · {SCENARIO_STATUS_LABELS[scenario.status]}
-                  </option>
-                ))}
-              </select>
-            </Field>
             <Field label="Semestre">
               <input
                 value={semester}
@@ -208,11 +187,11 @@ export function AcudeForm({
                   const value = event.target.value;
                   setTeacherId(value);
                   const teacher = teachers.find((item) => item.uid === value);
-                  if (teacher) setTeacherName(teacher.name);
+                  setTeacherName(teacher ? teacher.name : "Por asignar");
                 }}
                 className={selectClass}
               >
-                <option value="">Docente externo / por asignar</option>
+                <option value="pending">Sin asignar / por asignar</option>
                 {teacherId && !teachers.some((teacher) => teacher.uid === teacherId) && (
                   <option value={teacherId}>{teacherName || teacherId}</option>
                 )}
@@ -267,7 +246,7 @@ export function AcudeForm({
             </Field>
             <Field
               label="Imagen de portada"
-              hint="JPG, PNG o WebP. Hasta 2 MB con Storage; el respaldo gratuito acepta hasta 500 KB."
+              hint="JPG, PNG o WebP. Máximo 500 KB."
               className="sm:col-span-2"
             >
               <div className="flex flex-col gap-2">
@@ -286,7 +265,7 @@ export function AcudeForm({
                   className={`${inputClass} file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-teal-800`}
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={imageUrl}
                   onChange={(event) => setImageUrl(event.target.value)}
                   maxLength={500}
@@ -318,13 +297,14 @@ export function AcudeForm({
             <div>
               <h2 className="text-lg font-bold text-slate-900">Programación semanal</h2>
               <p className="text-xs text-slate-500">
-                El servidor bloquea cruces de escenario y de docente entre ACUDES.
+                Cada franja tiene su propio escenario. El escenario principal de la ficha se toma de
+                la primera franja. El servidor bloquea cruces de escenario y de docente.
               </p>
             </div>
             <button
               type="button"
               onClick={() =>
-                setSchedule((rows) => [...rows, newRow(scenarios[0]?.id ?? scenarioId)])
+                setSchedule((rows) => [...rows, newRow(scenarios[0]?.id ?? "")])
               }
               className={secondaryButtonClass}
             >

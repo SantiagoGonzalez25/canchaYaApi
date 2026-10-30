@@ -37,7 +37,7 @@ export async function uploadAcudeImage(
     throw new ApiError(400, "VALIDATION_ERROR", "La imagen está vacía");
   }
   if (file.size > MAX_ACUDE_IMAGE_BYTES) {
-    throw new ApiError(400, "PAYLOAD_TOO_LARGE", "La imagen no puede superar 2 MB");
+    throw new ApiError(400, "PAYLOAD_TOO_LARGE", "La imagen no puede superar 500 KB");
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());

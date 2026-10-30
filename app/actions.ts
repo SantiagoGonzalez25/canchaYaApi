@@ -174,6 +174,7 @@ export async function saveAcudeAction(_prev: FormState, formData: FormData): Pro
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
   let savedId: string;
+  let imageError: string | null = null;
   try {
     const acude = id
       ? await updateAcude(id, parsed.data, user)
@@ -182,22 +183,27 @@ export async function saveAcudeAction(_prev: FormState, formData: FormData): Pro
     const removeImage = formData.get("removeImage") === "1";
     const imageFile = formData.get("imageFile");
 
-    if (removeImage) {
-      await clearAcudeImage(acude.id);
-      await deleteAcudeImageBase64(acude.id);
-      if (acude.imageStoragePath) await deleteStorageImage(acude.imageStoragePath);
-    } else if (imageFile instanceof File && imageFile.size > 0) {
-      const image = await uploadAcudeImage(acude.id, imageFile);
-      await updateAcudeImage(acude.id, image.url, image.path);
-      if (image.path) await deleteAcudeImageBase64(acude.id);
-      if (acude.imageStoragePath && acude.imageStoragePath !== image.path) {
-        await deleteStorageImage(acude.imageStoragePath);
+    try {
+      if (removeImage) {
+        await clearAcudeImage(acude.id);
+        await deleteAcudeImageBase64(acude.id);
+        if (acude.imageStoragePath) await deleteStorageImage(acude.imageStoragePath);
+      } else if (imageFile instanceof File && imageFile.size > 0) {
+        const image = await uploadAcudeImage(acude.id, imageFile);
+        await updateAcudeImage(acude.id, image.url, image.path);
+        if (image.path) await deleteAcudeImageBase64(acude.id);
+        if (acude.imageStoragePath && acude.imageStoragePath !== image.path) {
+          await deleteStorageImage(acude.imageStoragePath);
+        }
+      } else if (!parsed.data.imageUrl) {
+        // El administrador borró la URL externa y no subió un archivo.
+        await clearAcudeImage(acude.id);
+        await deleteAcudeImageBase64(acude.id);
+        if (acude.imageStoragePath) await deleteStorageImage(acude.imageStoragePath);
       }
-    } else if (!parsed.data.imageUrl) {
-      // El administrador borró la URL externa y no subió un archivo.
-      await clearAcudeImage(acude.id);
-      await deleteAcudeImageBase64(acude.id);
-      if (acude.imageStoragePath) await deleteStorageImage(acude.imageStoragePath);
+    } catch (err) {
+      imageError = messageOf(err);
+      console.error("[web] no se pudo procesar la imagen:", err);
     }
 
     revalidatePath("/manager/acudes");
@@ -210,7 +216,9 @@ export async function saveAcudeAction(_prev: FormState, formData: FormData): Pro
   } catch (err) {
     return { error: messageOf(err) };
   }
-  redirect(`/manager/acudes/${savedId}?saved=1`);
+  const query = new URLSearchParams({ saved: "1" });
+  if (imageError) query.set("imageError", imageError);
+  redirect(`/manager/acudes/${savedId}?${query.toString()}`);
 }
 
 export async function archiveAcudeAction(id: string): Promise<void> {

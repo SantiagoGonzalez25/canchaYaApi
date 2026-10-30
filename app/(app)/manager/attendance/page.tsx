@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AttendanceForm } from "@/components/attendance-form";
+import { AttendanceFilters } from "@/components/attendance-filters";
 import {
   Alert,
   buttonClass,
@@ -9,7 +10,6 @@ import {
   EmptyState,
   PageHeader,
   secondaryButtonClass,
-  selectClass,
 } from "@/components/ui";
 import { listAcudes } from "@/lib/data/acudes";
 import { attendanceRoster } from "@/lib/data/attendance";
@@ -68,36 +68,23 @@ async function AttendanceContent({
 
   return (
     <>
-      <form className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1.2fr_1.2fr_auto_auto]">
-        {user.role === "admin" ? (
-          <select name="acudeId" defaultValue={acude.id} className={selectClass} aria-label="ACUDE">
-            {acudes.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-            {acude.name}
-          </div>
-        )}
-        <select name="slotId" defaultValue={slot.id} className={selectClass} aria-label="Franja">
-          {acude.schedule.map((item) => (
-            <option key={item.id} value={item.id}>
-              {WEEKDAY_LABELS[item.day]} {item.startTime}–{item.endTime}
-            </option>
-          ))}
-        </select>
-        <input
-          type="date"
-          name="date"
-          defaultValue={date}
-          className={selectClass}
-          aria-label="Fecha de la sesión"
-        />
-        <button className={buttonClass}>Cargar lista</button>
-      </form>
+      <AttendanceFilters
+        acudes={acudes.map((item) => ({
+          id: item.id,
+          name: item.name,
+          slots: item.schedule.map((schedule) => ({
+            id: schedule.id,
+            day: schedule.day,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+          })),
+        }))}
+        acudeId={acude.id}
+        slotId={slot.id}
+        date={date}
+        canSelectAcude={user.role === "admin"}
+        weekdayLabels={WEEKDAY_LABELS}
+      />
 
       <section className={`${cardClass} p-5`}>
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">

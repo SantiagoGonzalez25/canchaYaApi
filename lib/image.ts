@@ -27,4 +27,4 @@ export function sniffImageType(bytes: Uint8Array): ImageType | null {
   return null;
 }
 
-export const MAX_ACUDE_IMAGE_BYTES = 2 * 1024 * 1024;
+export const MAX_ACUDE_IMAGE_BYTES = 500 * 1024;

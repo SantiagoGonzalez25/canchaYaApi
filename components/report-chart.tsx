@@ -112,10 +112,33 @@ export function ReportChart({
 
 export function ReportActions({ report }: { report: ReportResult }) {
   const download = () => {
-    const matrix = buildMatrix(report);
-    const header = ["Dimensión", ...report.series.map((series) => series.name)];
-    const lines = [header, ...matrix.rows];
-    const csv = lines
+    const header = [
+      "Fecha",
+      "Estudiante",
+      "Correo",
+      "Sexo",
+      "ACUDE",
+      "Franja",
+      "Escenario",
+      "Docente",
+      "Categoría",
+      "Disciplina",
+      "Estado",
+    ];
+    const lines = report.rows.map((row) => [
+      row.date,
+      row.student,
+      row.email,
+      row.sex,
+      row.acude,
+      row.slot,
+      row.scenario,
+      row.teacher,
+      row.category,
+      row.discipline,
+      row.status,
+    ]);
+    const csv = [header, ...lines]
       .map((row) =>
         row
           .map((value) => `"${String(value).replaceAll('"', '""')}"`)

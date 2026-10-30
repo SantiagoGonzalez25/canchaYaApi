@@ -70,6 +70,11 @@ async function EditAcude({
           <Alert kind="ok">Cambios guardados. La cartelera y la ocupación ya reflejan la nueva programación.</Alert>
         </div>
       )}
+      {first(query.imageError) && (
+        <div className="mb-4">
+          <Alert kind="error">{first(query.imageError)}</Alert>
+        </div>
+      )}
       <AcudeForm
         initialAcude={acude}
         scenarios={scenarios}
