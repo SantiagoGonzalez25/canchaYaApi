@@ -91,11 +91,13 @@ export function Calendar({
   canManage,
 }: CalendarProps) {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
-  const [viewChoice, setViewChoice] = useState<"week" | "agenda" | null>(null);
+  const [viewChoice, setViewChoice] = useState<"week" | "agenda" | "scenario" | null>(null);
   const isMobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, serverMobileSnapshot);
   const view = viewChoice ?? (isMobile ? "agenda" : "week");
   const setView = setViewChoice;
   const [category, setCategory] = useState("");
+  const [scenarioFilter, setScenarioFilter] = useState("");
+  const [teacherFilter, setTeacherFilter] = useState("");
   const [query, setQuery] = useState("");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [onlyMine, setOnlyMine] = useState(isStudent);
@@ -110,6 +112,20 @@ export function Calendar({
     [myEnrollments],
   );
 
+  const scenarioOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const acude of acudes) {
+      for (const slot of acude.schedule) map.set(slot.scenarioId, slot.scenarioName);
+    }
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "es"));
+  }, [acudes]);
+
+  const teacherOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const acude of acudes) map.set(acude.teacherId, acude.teacherName);
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "es"));
+  }, [acudes]);
+
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)),
     [weekStart],
@@ -119,6 +135,10 @@ export function Calendar({
     const term = query.trim().toLowerCase();
     return acudes.filter((acude) => {
       if (category && acude.category !== category) return false;
+      if (scenarioFilter && !acude.schedule.some((slot) => slot.scenarioId === scenarioFilter)) {
+        return false;
+      }
+      if (teacherFilter && acude.teacherId !== teacherFilter) return false;
       if (onlyAvailable && acude.totalAvailable <= 0) return false;
       if (onlyMine && !enrolledAcudeIds.has(acude.id)) return false;
       if (term) {
@@ -127,12 +147,22 @@ export function Calendar({
       }
       return true;
     });
-  }, [acudes, category, query, onlyAvailable, onlyMine, enrolledAcudeIds]);
+  }, [
+    acudes,
+    category,
+    scenarioFilter,
+    teacherFilter,
+    query,
+    onlyAvailable,
+    onlyMine,
+    enrolledAcudeIds,
+  ]);
 
   const events = useMemo(() => {
     const list: CalendarEvent[] = [];
     for (const acude of filtered) {
       for (const slot of acude.schedule) {
+        if (scenarioFilter && slot.scenarioId !== scenarioFilter) continue;
         if (isStudent && onlyMine && !enrolledSlotIds.has(slot.id)) continue;
         const dayIndex = days.findIndex((date) => weekdayOf(date) === slot.day);
         if (dayIndex === -1) continue;
@@ -143,7 +173,13 @@ export function Calendar({
     return list.sort(
       (a, b) => a.date.localeCompare(b.date) || a.slot.startTime.localeCompare(b.slot.startTime),
     );
-  }, [filtered, days, isStudent, onlyMine, enrolledSlotIds]);
+  }, [filtered, days, isStudent, onlyMine, enrolledSlotIds, scenarioFilter]);
+
+  const scenarioColumns = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const event of events) map.set(event.slot.scenarioId, event.slot.scenarioName);
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "es"));
+  }, [events]);
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -234,27 +270,62 @@ export function Calendar({
             >
               Agenda
             </button>
+            <button
+              type="button"
+              onClick={() => setView("scenario")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+                view === "scenario" ? "bg-teal-700 text-white" : "text-slate-600"
+              }`}
+            >
+              Por escenario
+            </button>
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-center">
+        <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar por ACUDE, disciplina o docente..."
-            className={inputClass}
+            className={`${inputClass} lg:min-w-56 lg:flex-1`}
             aria-label="Buscar en el calendario"
           />
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value)}
-            className={selectClass}
+            className={`${selectClass} lg:w-44`}
             aria-label="Categoría"
           >
             <option value="">Todas las categorías</option>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={scenarioFilter}
+            onChange={(event) => setScenarioFilter(event.target.value)}
+            className={`${selectClass} lg:w-48`}
+            aria-label="Escenario"
+          >
+            <option value="">Todos los escenarios</option>
+            {scenarioOptions.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={teacherFilter}
+            onChange={(event) => setTeacherFilter(event.target.value)}
+            className={`${selectClass} lg:w-48`}
+            aria-label="Docente"
+          >
+            <option value="">Todos los docentes</option>
+            {teacherOptions.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
               </option>
             ))}
           </select>
@@ -282,6 +353,8 @@ export function Calendar({
             type="button"
             onClick={() => {
               setCategory("");
+              setScenarioFilter("");
+              setTeacherFilter("");
               setQuery("");
               setOnlyAvailable(false);
               setOnlyMine(false);
@@ -419,6 +492,129 @@ export function Calendar({
               );
             })}
           </div>
+        </div>
+      ) : view === "scenario" ? (
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {scenarioColumns.length === 0 ? (
+            <p className="p-10 text-center text-sm text-slate-500">
+              No hay franjas para los filtros seleccionados.
+            </p>
+          ) : (
+            <div className="min-w-[900px]">
+              <div
+                className="grid border-b border-slate-200 bg-slate-50"
+                style={{
+                  gridTemplateColumns: `8rem repeat(${scenarioColumns.length}, minmax(15rem, 1fr))`,
+                }}
+              >
+                <div className="px-3 py-3 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  Día
+                </div>
+                {scenarioColumns.map(([id, name]) => (
+                  <div
+                    key={id}
+                    className="border-l border-slate-200 px-3 py-3 text-xs font-bold text-slate-700"
+                  >
+                    {name}
+                  </div>
+                ))}
+              </div>
+              {days.map((date) => {
+                const dayEvents = eventsByDay.get(date) ?? [];
+                const isToday = date === today;
+                return (
+                  <div
+                    key={date}
+                    className={`grid border-b border-slate-100 last:border-0 ${
+                      isToday ? "bg-teal-50/30" : ""
+                    }`}
+                    style={{
+                      gridTemplateColumns: `8rem repeat(${scenarioColumns.length}, minmax(15rem, 1fr))`,
+                    }}
+                  >
+                    <div className="px-3 py-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        {WEEKDAY_LABELS[weekdayOf(date)]}
+                      </p>
+                      <p
+                        className={`text-sm font-black ${
+                          isToday ? "text-teal-700" : "text-slate-800"
+                        }`}
+                      >
+                        {shortDate(date)}
+                      </p>
+                      <p className="mt-1 text-[10px] text-slate-400">
+                        {dayEvents.length} franja(s)
+                      </p>
+                    </div>
+                    {scenarioColumns.map(([scenarioId]) => {
+                      const cellEvents = dayEvents.filter(
+                        (event) => event.slot.scenarioId === scenarioId,
+                      );
+                      return (
+                        <div key={scenarioId} className="border-l border-slate-100 p-2 align-top">
+                          {cellEvents.length === 0 ? (
+                            <p className="px-1 py-3 text-[10px] text-slate-300">—</p>
+                          ) : (
+                            <div className="flex flex-col gap-1.5">
+                              {cellEvents.map((event) => {
+                                const enrolled = enrolledSlotIds.has(event.slot.id);
+                                const full = event.slot.available <= 0;
+                                return (
+                                  <button
+                                    key={event.key}
+                                    type="button"
+                                    onClick={() =>
+                                      setSelected({
+                                        acudeId: event.acude.id,
+                                        slotId: event.slot.id,
+                                      })
+                                    }
+                                    className={`rounded-lg border border-l-4 p-2 text-left transition hover:shadow-sm ${
+                                      enrolled ? "ring-2 ring-emerald-400/60" : ""
+                                    }`}
+                                    style={eventStyle(event.acude.category)}
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <p className="text-[10px] font-black text-slate-800">
+                                        {event.slot.startTime}–{event.slot.endTime}
+                                      </p>
+                                      {enrolled ? (
+                                        <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+                                          Inscrito
+                                        </span>
+                                      ) : full ? (
+                                        <span className="rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold text-rose-700">
+                                          Lleno
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    <p className="mt-1 text-xs font-bold leading-snug text-slate-900">
+                                      {event.acude.name}
+                                    </p>
+                                    <p className="mt-0.5 truncate text-[10px] text-slate-500">
+                                      {event.acude.teacherName}
+                                    </p>
+                                    <p className="mt-1 text-[9px] text-slate-400">
+                                      {event.slot.enrolled}/{event.slot.capacity} inscritos
+                                    </p>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <p className="border-t border-slate-100 px-4 py-3 text-[11px] text-slate-500">
+            Cada columna es un escenario. Las franjas de la misma hora quedan lado a lado, sin
+            apilarse.
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
