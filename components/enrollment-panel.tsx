@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cancelFormAction, enrollFormAction, type EnrollState } from "@/app/actions";
 import { SEX_LABELS, WEEKDAY_LABELS } from "@/lib/labels";
 import type { Enrollment, LiveAcude, Sex } from "@/lib/types";
-import { Alert, buttonClass, dangerButtonClass, Field, ProgressBar, selectClass } from "./ui";
+import { Alert, buttonClass, dangerButtonClass, Field, ProgressBar, secondaryButtonClass, selectClass } from "./ui";
 
 const initial: EnrollState = {};
 
@@ -25,16 +26,37 @@ export function EnrollmentPanel({
   const [cancelState, cancelAction, cancelPending] = useActionState(cancelFormAction, initial);
 
   useEffect(() => {
-    if (!state.ok) return;
-    router.push("/my-enrollments?enrolled=1");
-  }, [state.ok, router]);
+    if (state.ok || cancelState.ok) router.refresh();
+  }, [state.ok, cancelState.ok, router]);
 
-  useEffect(() => {
-    if (!cancelState.ok) return;
-    router.push("/my-enrollments?canceled=1");
-  }, [cancelState.ok, router]);
+  const selectedSlot = acude.schedule.find((slot) => slot.id === slotId);
 
-  if (existing) {
+  if (state.ok) {
+    return (
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
+        <p className="text-base font-bold text-emerald-900">Inscripción exitosa</p>
+        <p className="mt-1 text-sm text-emerald-800">
+          Quedaste inscrito en <strong>{acude.name}</strong>
+          {selectedSlot
+            ? `, ${WEEKDAY_LABELS[selectedSlot.day]} ${selectedSlot.startTime}–${selectedSlot.endTime}.`
+            : "."}
+        </p>
+        <p className="mt-2 text-xs text-emerald-700">
+          Ya puedes verla en Mis ACUDES. El cupo quedó reservado para ti.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/my-enrollments" className={buttonClass}>
+            Ir a Mis ACUDES
+          </Link>
+          <Link href={`/acudes/${acude.id}`} className={secondaryButtonClass}>
+            Seguir en este ACUDE
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (existing && !cancelState.ok) {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
         <div>
@@ -146,6 +168,7 @@ export function EnrollmentPanel({
 
       {state.error && <Alert kind="error">{state.error}</Alert>}
       {state.ok && <Alert kind="ok">{state.ok}</Alert>}
+      {cancelState.ok && <Alert kind="ok">{cancelState.ok}. Ya puedes volver a inscribirte.</Alert>}
 
       <button
         type="submit"

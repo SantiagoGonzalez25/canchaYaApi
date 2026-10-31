@@ -494,6 +494,9 @@ export function Calendar({
                     {CATEGORY_LABELS[selectedAcude.category]}
                   </Badge>
                   <Badge tone="neutral">{selectedAcude.semester}</Badge>
+                  {selectedAcude.status !== "published" && (
+                    <Badge tone="amber">Borrador</Badge>
+                  )}
                   {enrolledSlotIds.has(selectedSlot.id) && <Badge tone="teal">Inscrito</Badge>}
                 </div>
                 <h2 className="mt-2 text-xl font-black text-slate-900">{selectedAcude.name}</h2>

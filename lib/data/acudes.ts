@@ -132,6 +132,7 @@ export async function listLiveAcudes(
     category?: AcudeCategory;
     day?: string;
     teacherId?: string;
+    includeDrafts?: boolean;
     updatedSince?: string;
   } = {},
 ): Promise<LiveAcude[]> {
@@ -140,7 +141,7 @@ export async function listLiveAcudes(
     listAcudes({
       q: filter.q,
       category: filter.category,
-      status: "published",
+      ...(filter.includeDrafts ? {} : { status: "published" as const }),
       teacherId: filter.teacherId,
       updatedSince: filter.updatedSince,
     }),

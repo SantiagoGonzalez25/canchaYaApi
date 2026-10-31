@@ -50,7 +50,9 @@ export async function verifyIdToken(idToken: string): Promise<AuthUser> {
 /** Verifica la cookie de sesión httpOnly del panel web. */
 export async function verifySessionCookie(cookie: string): Promise<AuthUser> {
   try {
-    return toAuthUser(await adminAuth().verifySessionCookie(cookie, true));
+    // Sin `checkRevoked` se evita una llamada extra a Firebase Auth en cada
+    // navegación. La cookie expira en 5 días y el logout la elimina.
+    return toAuthUser(await adminAuth().verifySessionCookie(cookie));
   } catch {
     throw new ApiError(401, "UNAUTHENTICATED", "Sesión inválida o expirada");
   }
