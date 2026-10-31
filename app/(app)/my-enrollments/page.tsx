@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CancelEnrollmentButton } from "@/components/cancel-enrollment-button";
 import {
+  Alert,
   Badge,
   buttonClass,
   cardClass,
@@ -10,8 +11,14 @@ import {
   PageHeader,
   secondaryButtonClass,
 } from "@/components/ui";
+import { listAcudes } from "@/lib/data/acudes";
 import { listMyEnrollments } from "@/lib/data/enrollments";
-import { CATEGORY_LABELS, formatDate, WEEKDAY_LABELS } from "@/lib/labels";
+import {
+  CATEGORY_LABELS,
+  CURRENT_SEMESTER,
+  formatDate,
+  WEEKDAY_LABELS,
+} from "@/lib/labels";
 import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Mis ACUDES" };
@@ -26,35 +33,76 @@ async function MyEnrollments({
 }) {
   const user = await requirePageUser("student");
   const params = await searchParams;
-  const status = first(params.status) === "canceled" ? "canceled" : "active";
-  const all = await listMyEnrollments(user, {});
-  const activeCount = all.filter((item) => item.status === "active").length;
-  const enrollments = all.filter((item) => item.status === status);
+  const requested = first(params.status);
+  const status =
+    requested === "canceled" || requested === "finished" ? requested : "active";
+  const enrolled = first(params.enrolled) === "1";
+  const canceled = first(params.canceled) === "1";
+  const [all, acudes] = await Promise.all([
+    listMyEnrollments(user, {}),
+    listAcudes(),
+  ]);
+  const acudeById = new Map(acudes.map((acude) => [acude.id, acude]));
+  const isFinished = (item: (typeof all)[number]) => {
+    const acude = acudeById.get(item.acudeId);
+    return acude?.status === "archived" || item.semester < CURRENT_SEMESTER.name;
+  };
+  const activeItems = all.filter((item) => item.status === "active" && !isFinished(item));
+  const finishedItems = all.filter((item) => item.status === "active" && isFinished(item));
+  const canceledItems = all.filter((item) => item.status === "canceled");
+  const enrollments =
+    status === "active" ? activeItems : status === "finished" ? finishedItems : canceledItems;
 
   return (
     <>
+      {enrolled && (
+        <div className="mb-4">
+          <Alert kind="ok">
+            Inscripción confirmada. Ya aparece en tus ACUDES y el cupo quedó reservado para ti.
+          </Alert>
+        </div>
+      )}
+      {canceled && (
+        <div className="mb-4">
+          <Alert kind="ok">Inscripción cancelada. El cupo quedó libre de inmediato.</Alert>
+        </div>
+      )}
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <Link
           href="/my-enrollments"
           className={status === "active" ? buttonClass : secondaryButtonClass}
         >
-          Activas ({activeCount})
+          Activas ({activeItems.length})
+        </Link>
+        <Link
+          href="/my-enrollments?status=finished"
+          className={status === "finished" ? buttonClass : secondaryButtonClass}
+        >
+          Finalizadas ({finishedItems.length})
         </Link>
         <Link
           href="/my-enrollments?status=canceled"
           className={status === "canceled" ? buttonClass : secondaryButtonClass}
         >
-          Canceladas
+          Canceladas ({canceledItems.length})
         </Link>
       </div>
 
       {enrollments.length === 0 ? (
         <EmptyState
-          title={status === "active" ? "No tienes inscripciones activas" : "No hay inscripciones canceladas"}
+          title={
+            status === "active"
+              ? "No tienes inscripciones activas"
+              : status === "finished"
+                ? "No hay ACUDES finalizados"
+                : "No hay inscripciones canceladas"
+          }
           description={
             status === "active"
               ? "Explora la cartelera o el calendario semanal y elige un subgrupo con cupo."
-              : "Cuando canceles una inscripción quedará registrada aquí en tu historial."
+              : status === "finished"
+                ? "Aquí aparecerán los ACUDES archivados o de semestres anteriores."
+                : "Cuando canceles una inscripción quedará registrada aquí en tu historial."
           }
           action={
             <Link href="/acudes" className={buttonClass}>
@@ -79,8 +127,20 @@ async function MyEnrollments({
                     </Link>
                   </h2>
                 </div>
-                <Badge tone={enrollment.status === "active" ? "teal" : "rose"}>
-                  {enrollment.status === "active" ? "Activa" : "Cancelada"}
+                <Badge
+                  tone={
+                    enrollment.status === "canceled"
+                      ? "rose"
+                      : isFinished(enrollment)
+                        ? "neutral"
+                        : "teal"
+                  }
+                >
+                  {enrollment.status === "canceled"
+                    ? "Cancelada"
+                    : isFinished(enrollment)
+                      ? "Finalizada"
+                      : "Activa"}
                 </Badge>
               </div>
 
@@ -122,7 +182,9 @@ async function MyEnrollments({
                 >
                   Ver ficha del ACUDE →
                 </Link>
-                {enrollment.status === "active" && <CancelEnrollmentButton id={enrollment.id} />}
+                {enrollment.status === "active" && !isFinished(enrollment) && (
+                  <CancelEnrollmentButton id={enrollment.id} />
+                )}
               </div>
             </li>
           ))}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AcudeCard } from "@/components/acude-card";
 import {
@@ -21,6 +22,7 @@ const first = (value: string | string[] | undefined) =>
 
 async function LiveList({ searchParams }: { searchParams: PageProps<"/acudes">["searchParams"] }) {
   const user = await requirePageUser();
+  if (user.role === "manager") redirect("/manager/acudes");
   const params = await searchParams;
   const q = first(params.q)?.trim().slice(0, 100) || undefined;
   const category = first(params.category) as keyof typeof CATEGORY_LABELS | undefined;
@@ -29,7 +31,6 @@ async function LiveList({ searchParams }: { searchParams: PageProps<"/acudes">["
     q,
     category,
     day,
-    ...(user.role === "manager" ? { teacherId: user.uid } : {}),
   });
 
   return (

@@ -553,6 +553,7 @@ export function Calendar({
               {isStudent && (
                 <div className="sm:col-span-2">
                   <EnrollmentPanel
+                    key={existingEnrollment?.id ?? `new-${selectedAcude.id}`}
                     acude={selectedAcude}
                     userSex={userSex}
                     existing={existingEnrollment}

@@ -91,6 +91,11 @@ async function ReportsContent({
   ]);
 
   const teachers = [...new Map(acudes.map((acude) => [acude.teacherId, acude.teacherName])).entries()];
+  const categories = [...new Set(acudes.map((acude) => acude.category))].sort((a, b) =>
+    CATEGORY_LABELS[a].localeCompare(CATEGORY_LABELS[b], "es"),
+  );
+  const scenarioIds = new Set(acudes.flatMap((acude) => acude.schedule.map((slot) => slot.scenarioId)));
+  const availableScenarios = scenarios.filter((scenario) => scenarioIds.has(scenario.id));
   const disciplines = [...new Set(acudes.map((acude) => acude.discipline))].sort((a, b) =>
     a.localeCompare(b, "es"),
   );
@@ -180,9 +185,9 @@ async function ReportsContent({
           Categoría
           <select name="category" defaultValue={first(params.category) ?? ""} className={selectClass}>
             <option value="">Todas</option>
-            {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+            {categories.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {CATEGORY_LABELS[value]}
               </option>
             ))}
           </select>
@@ -210,7 +215,7 @@ async function ReportsContent({
             className={selectClass}
           >
             <option value="">Todos</option>
-            {scenarios.map((scenario) => (
+            {availableScenarios.map((scenario) => (
               <option key={scenario.id} value={scenario.id}>
                 {scenario.name}
               </option>
@@ -375,7 +380,8 @@ async function ReportsContent({
         <Badge tone="neutral">Datos del servidor</Badge>
         <span>
           Los reportes se calculan con los campos registrados en cada inscripción y en cada registro
-          de asistencia.
+          de asistencia. Las inscripciones se consolidan por estudiante y franja para no duplicar
+          cancelaciones repetidas.
         </span>
       </div>
     </>

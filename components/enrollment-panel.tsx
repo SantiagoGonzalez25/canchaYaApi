@@ -25,8 +25,14 @@ export function EnrollmentPanel({
   const [cancelState, cancelAction, cancelPending] = useActionState(cancelFormAction, initial);
 
   useEffect(() => {
-    if (state.ok || cancelState.ok) router.refresh();
-  }, [state.ok, cancelState.ok, router]);
+    if (!state.ok) return;
+    router.push("/my-enrollments?enrolled=1");
+  }, [state.ok, router]);
+
+  useEffect(() => {
+    if (!cancelState.ok) return;
+    router.push("/my-enrollments?canceled=1");
+  }, [cancelState.ok, router]);
 
   if (existing) {
     return (
@@ -51,11 +57,6 @@ export function EnrollmentPanel({
         {cancelState.error && (
           <div className="mt-3">
             <Alert kind="error">{cancelState.error}</Alert>
-          </div>
-        )}
-        {cancelState.ok && (
-          <div className="mt-3">
-            <Alert kind="ok">{cancelState.ok}</Alert>
           </div>
         )}
       </div>

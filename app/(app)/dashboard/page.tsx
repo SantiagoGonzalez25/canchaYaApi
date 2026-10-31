@@ -274,53 +274,73 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
         )}
       </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <section className={`${cardClass} p-5`}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900">Escenarios ahora</h2>
-            <Link
-              href="/manager/occupation"
-              className="text-xs font-semibold text-teal-700 hover:underline"
-            >
-              Panel completo →
-            </Link>
-          </div>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {occupation.scenarios.slice(0, 8).map((item) => (
-              <li key={item.scenario.id} className="rounded-xl border border-slate-100 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-bold text-slate-800">{item.scenario.name}</p>
-                  <Badge tone={item.current ? "teal" : "neutral"}>
-                    {item.current ? "Ocupado" : "Libre"}
-                  </Badge>
-                </div>
-                {item.current ? (
-                  <div className="mt-2">
-                    <p className="truncate text-xs font-medium text-slate-600">
-                      {item.current.acudeName}
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      {item.current.startTime}–{item.current.endTime} ·{" "}
-                      {item.current.teacherName}
-                    </p>
-                    <div className="mt-2">
-                      <ProgressBar
-                        value={item.current.occupancyPct}
-                        tone={item.current.occupancyPct >= 90 ? "rose" : "teal"}
-                      />
+      <div
+        className={
+          user.role === "admin"
+            ? "mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
+            : "mt-6 grid gap-6"
+        }
+      >
+        {user.role === "admin" && (
+          <section className={`${cardClass} p-5`}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">Escenarios ahora</h2>
+              <Link
+                href="/manager/occupation"
+                className="text-xs font-semibold text-teal-700 hover:underline"
+              >
+                Panel completo →
+              </Link>
+            </div>
+            {occupation.scenarios.length === 0 ? (
+              <EmptyState
+                title="No hay escenarios registrados"
+                description="Crea los escenarios institucionales para poder programar ACUDES."
+                action={
+                  <Link href="/manager/scenarios" className={buttonClass}>
+                    Gestionar escenarios
+                  </Link>
+                }
+              />
+            ) : (
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {occupation.scenarios.slice(0, 8).map((item) => (
+                  <li key={item.scenario.id} className="rounded-xl border border-slate-100 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-sm font-bold text-slate-800">{item.scenario.name}</p>
+                      <Badge tone={item.current ? "teal" : "neutral"}>
+                        {item.current ? "Ocupado" : "Libre"}
+                      </Badge>
                     </div>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-xs text-slate-400">
-                    {item.next
-                      ? `Próximo: ${item.next.acudeName} ${item.next.startTime}`
-                      : "Sin sesiones programadas hoy"}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
+                    {item.current ? (
+                      <div className="mt-2">
+                        <p className="truncate text-xs font-medium text-slate-600">
+                          {item.current.acudeName}
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                          {item.current.startTime}–{item.current.endTime} ·{" "}
+                          {item.current.teacherName}
+                        </p>
+                        <div className="mt-2">
+                          <ProgressBar
+                            value={item.current.occupancyPct}
+                            tone={item.current.occupancyPct >= 90 ? "rose" : "teal"}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-400">
+                        {item.next
+                          ? `Próximo: ${item.next.acudeName} ${item.next.startTime}`
+                          : "Sin sesiones programadas hoy"}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         <section className={`${cardClass} p-5`}>
           <h2 className="mb-4 text-lg font-bold text-slate-900">Próximas sesiones de hoy</h2>

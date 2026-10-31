@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { logoutAction } from "@/app/actions";
 import { ROLE_LABELS } from "@/lib/labels";
 import { getWebUser } from "@/lib/web/session";
+import { AuthLinks } from "./auth-links";
 import { NavLink } from "./nav-link";
 import { secondaryButtonClass } from "./ui";
 
@@ -110,17 +111,7 @@ export async function Header() {
               </details>
             </>
           ) : (
-            <>
-              <Link href="/login" className={secondaryButtonClass}>
-                Ingresar
-              </Link>
-              <Link
-                href="/register"
-                className="rounded-xl bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-              >
-                Crear cuenta
-              </Link>
-            </>
+            <AuthLinks />
           )}
         </div>
       </div>

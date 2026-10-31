@@ -67,7 +67,17 @@ async function EditAcude({
       />
       {first(query.saved) && (
         <div className="mb-4">
-          <Alert kind="ok">Cambios guardados. La cartelera y la ocupación ya reflejan la nueva programación.</Alert>
+          <Alert kind="ok">
+            <span className="font-semibold">Cambios guardados correctamente.</span>{" "}
+            <Link href="/manager/acudes" className="font-semibold underline">
+              Volver a la lista
+            </Link>{" "}
+            o{" "}
+            <Link href={`/manager/acudes/${acude.id}`} className="font-semibold underline">
+              seguir editando
+            </Link>
+            .
+          </Alert>
         </div>
       )}
       {first(query.imageError) && (

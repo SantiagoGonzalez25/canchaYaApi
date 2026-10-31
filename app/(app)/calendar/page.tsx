@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { Calendar } from "@/components/calendar";
-import { PageHeader, secondaryButtonClass } from "@/components/ui";
+import { PageHeader } from "@/components/ui";
 import { listLiveAcudes } from "@/lib/data/acudes";
 import { listMyEnrollments } from "@/lib/data/enrollments";
 import { SEMESTER_LABEL, todayKey } from "@/lib/labels";
@@ -47,11 +46,6 @@ export default function CalendarPage() {
         eyebrow="Calendario"
         title="Calendario semanal de ACUDES"
         description={`${SEMESTER_LABEL}. Consulta las franjas, filtra por categoría y abre cada sesión para inscribirte o revisar su ocupación.`}
-        actions={
-          <Link href="/acudes" className={secondaryButtonClass}>
-            Cartelera
-          </Link>
-        }
       />
       <Suspense fallback={<Skeleton />}>
         <CalendarContent />

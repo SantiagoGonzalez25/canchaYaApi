@@ -2,6 +2,7 @@ import "server-only";
 import {
   buildAttendanceReport,
   buildEnrollmentReport,
+  latestEnrollmentPerSlot,
   type ReportFilters,
 } from "../domain/reporting";
 import { addDays, todayKey } from "../labels";
@@ -33,7 +34,7 @@ function filtersOf(query: ReportQuery): ReportFilters {
 /** Reporte de eventos de inscripción: todos los campos del formulario + fechas. */
 export async function enrollmentReport(query: ReportQuery): Promise<ReportResult> {
   const filters = filtersOf(query);
-  const items = await listEnrollments({});
+  const items = latestEnrollmentPerSlot(await listEnrollments({}));
   return buildEnrollmentReport(items, filters, query.groupBy);
 }
 

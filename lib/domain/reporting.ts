@@ -146,9 +146,23 @@ function sortPoints(points: ReportPoint[], groupBy: ReportGroupBy): ReportPoint[
   return [...points].sort((a, b) => b.value - a.value || a.key.localeCompare(b.key));
 }
 
+/**
+ * Para reportes se conserva una sola fila por estudiante, ACUDE y franja: la
+ * última actualización. La base mantiene el historial, pero las estadísticas no
+ * inflan cancelaciones repetidas del mismo subgrupo.
+ */
+export function latestEnrollmentPerSlot(items: Enrollment[]): Enrollment[] {
+  const latest = new Map<string, Enrollment>();
+  for (const item of items) {
+    const key = `${item.userId}:${item.acudeId}:${item.slotId}`;
+    const current = latest.get(key);
+    if (!current || item.updatedAt > current.updatedAt) latest.set(key, item);
+  }
+  return [...latest.values()];
+}
+
 export function filterEnrollments(items: Enrollment[], filters: ReportFilters): Enrollment[] {
-  return items.filter((item) => {
-    if (!inRange(item.enrolledOn ?? item.enrolledAt, filters.from, filters.to)) return false;
+  return items.filter((item) => {    if (!inRange(item.enrolledOn ?? item.enrolledAt, filters.from, filters.to)) return false;
     if (filters.acudeId && item.acudeId !== filters.acudeId) return false;
     if (filters.slotId && item.slotId !== filters.slotId) return false;
     if (filters.category && item.category !== filters.category) return false;

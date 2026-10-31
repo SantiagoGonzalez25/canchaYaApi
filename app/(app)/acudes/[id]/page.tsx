@@ -26,8 +26,11 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
 
   return (
     <>
-      <Link href="/acudes" className="mb-4 inline-block text-sm font-semibold text-teal-700 hover:underline">
-        ← Volver a la cartelera
+      <Link
+        href={user.role === "manager" ? "/manager/acudes" : "/acudes"}
+        className="mb-4 inline-block text-sm font-semibold text-teal-700 hover:underline"
+      >
+        ← {user.role === "manager" ? "Volver a mi ACUDE" : "Volver a la cartelera"}
       </Link>
       <PageHeader
         eyebrow={`${CATEGORY_LABELS[acude.category]} · ${acude.semester}`}
@@ -40,11 +43,11 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
                 ? `${acude.totalAvailable} cupos disponibles`
                 : "Sin cupos disponibles"}
             </Badge>
-          ) : (
+          ) : user.role === "admin" ? (
             <Link href={`/manager/acudes/${acude.id}`} className={buttonClass}>
               Editar ACUDE
             </Link>
-          )
+          ) : null
         }
       />
 

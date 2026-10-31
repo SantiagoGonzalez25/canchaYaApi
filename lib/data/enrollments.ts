@@ -76,21 +76,48 @@ export async function createEnrollment(
     }
     const slot = findSlot(acude, input.slotId);
 
-    const [acudeEnrollments, myEnrollments] = await Promise.all([
+    const [acudeEnrollments, mineSnap] = await Promise.all([
       tx.get(
         firestore
           .collection(ENROLLMENTS)
           .where("acudeId", "==", input.acudeId)
           .where("status", "==", "active"),
       ),
-      tx.get(
-        firestore
-          .collection(ENROLLMENTS)
-          .where("userId", "==", user.uid)
-          .where("status", "==", "active"),
-      ),
+      tx.get(firestore.collection(ENROLLMENTS).where("userId", "==", user.uid)),
     ]);
 
+    const mine = mineSnap.docs.map((doc) => ({
+      ref: doc.ref,
+      data: doc.data() as EnrollmentDoc,
+    }));
+    // Reintento idempotente aunque la inscripción se haya reactivado sobre un
+    // documento anterior: el clientRequestId es la clave de la operación.
+    const sameRequest = mine.find(
+      (item) =>
+        item.data.clientRequestId === input.clientRequestId &&
+        item.data.acudeId === input.acudeId &&
+        item.data.slotId === slot.id,
+    );
+    if (sameRequest) {
+      return {
+        enrollment: toEnrollment(sameRequest.ref.id, sameRequest.data),
+        created: false,
+      };
+    }
+
+    // Si el estudiante ya había estado inscrito en esta misma franja y canceló,
+    // se reactiva el mismo documento en lugar de crear otro. Así el historial y
+    // los reportes no acumulan cancelaciones repetidas del mismo subgrupo.
+    const previous = mine.find(
+      (item) =>
+        item.data.acudeId === input.acudeId &&
+        item.data.slotId === slot.id &&
+        item.data.status === "canceled",
+    );
+
+    const conflicts = mine
+      .filter((item) => item.data.status === "active")
+      .map((item) => item.data);
     const docsInSlot = acudeEnrollments.docs.filter(
       (doc) => (doc.data() as EnrollmentDoc).slotId === slot.id,
     ).length;
@@ -107,7 +134,6 @@ export async function createEnrollment(
       );
     }
 
-    const conflicts = myEnrollments.docs.map((doc) => doc.data() as EnrollmentDoc);
     if (
       isStudentOverlap(conflicts, {
         acudeId: input.acudeId,
@@ -158,7 +184,8 @@ export async function createEnrollment(
       canceledAt: null,
       updatedAt: now,
     };
-    tx.set(enrollmentRef, data);
+    const targetRef = previous?.ref ?? enrollmentRef;
+    tx.set(targetRef, data);
     const nextSlotEnrolled = {
       ...(acude.slotEnrolled ?? {}),
       [slot.id]: slotEnrolled + 1,
@@ -168,7 +195,7 @@ export async function createEnrollment(
       slotEnrolled: nextSlotEnrolled,
       updatedAt: now,
     });
-    return { enrollment: toEnrollment(enrollmentRef.id, data), created: true };
+    return { enrollment: toEnrollment(targetRef.id, data), created: true };
   });
 
   // El sexo se toma del perfil; solo se actualiza si el usuario lo cambió.
