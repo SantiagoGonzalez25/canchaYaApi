@@ -569,6 +569,20 @@ export function buildOpenApiSpec(): Json {
           },
         },
       },
+      "/api/auth/managers": {
+        get: {
+          tags: ["Autenticación"],
+          summary: "Lista los perfiles de profesor (solo admin)",
+          responses: {
+            "200": {
+              description: "Profesores registrados",
+              content: json(listResponse("managers", "User")),
+            },
+            "401": r("Unauthorized"),
+            "403": r("Forbidden"),
+          },
+        },
+      },
       "/api/acudes/live": {
         get: {
           tags: ["Cartelera"],
@@ -673,6 +687,71 @@ export function buildOpenApiSpec(): Json {
               description: "Imagen JPEG, PNG o WebP",
               content: { "image/*": { schema: { type: "string", format: "binary" } } },
             },
+            "404": r("NotFound"),
+          },
+        },
+        post: {
+          tags: ["ACUDES"],
+          summary: "Sube o reemplaza la portada global (solo admin)",
+          parameters: [idParam],
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  type: "object",
+                  required: ["file"],
+                  properties: {
+                    file: {
+                      type: "string",
+                      format: "binary",
+                      description: "JPEG, PNG o WebP de máximo 500 KB",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Portada actualizada",
+              content: json({
+                type: "object",
+                properties: {
+                  acude: ref("Acude"),
+                  image: {
+                    type: "object",
+                    properties: {
+                      url: { type: "string" },
+                      storagePath: { type: ["string", "null"] },
+                    },
+                  },
+                },
+              }),
+            },
+            "400": r("BadRequest"),
+            "401": r("Unauthorized"),
+            "403": r("Forbidden"),
+            "404": r("NotFound"),
+          },
+        },
+        delete: {
+          tags: ["ACUDES"],
+          summary: "Quita la portada global (solo admin)",
+          parameters: [idParam],
+          responses: {
+            "200": {
+              description: "Portada eliminada",
+              content: json({
+                type: "object",
+                properties: {
+                  acude: ref("Acude"),
+                  deleted: { type: "boolean" },
+                },
+              }),
+            },
+            "401": r("Unauthorized"),
+            "403": r("Forbidden"),
             "404": r("NotFound"),
           },
         },

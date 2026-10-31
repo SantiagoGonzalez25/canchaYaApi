@@ -89,12 +89,14 @@ El registro público **siempre** crea estudiantes. Los roles viajan como *custom
 | POST | `/api/auth/refresh` | público | Renueva el `idToken` |
 | GET | `/api/auth/me` | autenticado | Usuario y rol |
 | POST | `/api/auth/manager-register` | admin | Crea un profesor |
+| GET | `/api/auth/managers` | admin | Lista los perfiles de profesor |
 | GET | `/api/acudes/live?q=&category=&day=&updatedSince=` | autenticado | Cartelera (profesor: solo su ACUDE) |
 | GET | `/api/acudes?status=&category=&q=&updatedSince=` | profesor/admin | Listado filtrado por rol |
 | POST | `/api/acudes` | admin | Crear ACUDE (bloquea cruces) |
 | GET | `/api/acudes/:id` | autenticado | Detalle (profesor: solo el suyo) |
 | PUT/DELETE | `/api/acudes/:id` | admin | Edición y archivado |
 | GET | `/api/acudes/:id/image` | público | Imagen del ACUDE |
+| POST/DELETE | `/api/acudes/:id/image` | admin | Sube o quita la portada global (multipart `file`, máx. 500 KB) |
 | GET | `/api/scenarios` | autenticado | Escenarios |
 | POST/PUT/DELETE | `/api/scenarios...` | admin | CRUD de escenarios |
 | GET | `/api/scenarios/occupation?date=&day=` | profesor/admin | Ocupación filtrada por rol |
