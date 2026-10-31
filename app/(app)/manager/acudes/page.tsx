@@ -233,11 +233,6 @@ export default function ManagerAcudesPage(props: PageProps<"/manager/acudes">) {
         eyebrow="Gestión"
         title="ACUDES y subgrupos"
         description="Consulta grupos, docentes, escenarios, cupos y franjas. La creación y edición están reservadas al administrador."
-        actions={
-          <Link href="/manager/occupation" className={secondaryButtonClass}>
-            Ver ocupación
-          </Link>
-        }
       />
       <Suspense
         fallback={<div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />}

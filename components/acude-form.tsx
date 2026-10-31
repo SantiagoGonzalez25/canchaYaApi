@@ -126,7 +126,11 @@ export function AcudeForm({
         <section className={`${cardClass} p-5`}>
           <h2 className="text-lg font-bold text-slate-900">Datos generales</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <Field label="Nombre del ACUDE" className="sm:col-span-2">
+            <Field
+              label="Nombre del ACUDE"
+              hint="Puedes repetir el nombre si cambia el docente, el horario o el escenario."
+              className="sm:col-span-2"
+            >
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}

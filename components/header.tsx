@@ -24,7 +24,9 @@ function navItems(role: "student" | "manager" | "admin"): NavItem[] {
   return [
     { href: "/dashboard", label: "Panel" },
     { href: "/calendar", label: "Calendario" },
-    { href: "/manager/occupation", label: "Ocupación" },
+    ...(role === "admin"
+      ? [{ href: "/manager/occupation", label: "Ocupación" }]
+      : []),
     { href: "/manager/acudes", label: role === "manager" ? "Mi ACUDE" : "ACUDES" },
     ...(role === "admin" ? [{ href: "/manager/scenarios", label: "Escenarios" }] : []),
     { href: "/manager/attendance", label: "Asistencia" },

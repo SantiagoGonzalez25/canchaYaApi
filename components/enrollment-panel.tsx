@@ -48,8 +48,8 @@ export function EnrollmentPanel({
           <Link href="/my-enrollments" className={buttonClass}>
             Ir a Mis ACUDES
           </Link>
-          <Link href={`/acudes/${acude.id}`} className={secondaryButtonClass}>
-            Seguir en este ACUDE
+          <Link href="/acudes" className={secondaryButtonClass}>
+            Explorar más ACUDES
           </Link>
         </div>
       </div>

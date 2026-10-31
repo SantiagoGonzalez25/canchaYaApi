@@ -150,7 +150,11 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
         <aside className="lg:sticky lg:top-20 lg:self-start">
           <section className={`${cardClass} p-5`}>
             <h2 className="text-lg font-bold text-slate-900">
-              {user.role === "student" ? "Inscripción" : "Administración"}
+              {user.role === "student"
+                ? "Inscripción"
+                : user.role === "admin"
+                  ? "Administración"
+                  : "Mi ACUDE"}
             </h2>
             {user.role === "student" ? (
               <div className="mt-4">
@@ -162,15 +166,19 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
                   Este ACUDE tiene {acude.currentEnrolled} inscripciones activas y{" "}
                   {acude.schedule.length} subgrupos.
                 </p>
-                <Link href={`/manager/acudes/${acude.id}`} className={buttonClass}>
-                  Editar programación
-                </Link>
+                {user.role === "admin" && (
+                  <Link href={`/manager/acudes/${acude.id}`} className={buttonClass}>
+                    Editar programación
+                  </Link>
+                )}
                 <Link href={`/manager/attendance?acudeId=${acude.id}`} className={secondaryButtonClass}>
                   Pasar asistencia
                 </Link>
-                <Link href="/manager/occupation" className={secondaryButtonClass}>
-                  Ver ocupación
-                </Link>
+                {user.role === "admin" && (
+                  <Link href="/manager/occupation" className={secondaryButtonClass}>
+                    Ver ocupación
+                  </Link>
+                )}
               </div>
             )}
           </section>

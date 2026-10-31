@@ -397,7 +397,9 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
           ["Ocupación", "Consulta los grupos por escenario.", "/manager/occupation"],
           ["Asistencia", "Registra la asistencia de cada subgrupo.", "/manager/attendance"],
           ["Reportes", "Consulta eventos y asistencia.", "/manager/reports"],
-        ].map(([title, text, href]) => (
+        ]
+          .filter(([, , href]) => user.role === "admin" || href !== "/manager/occupation")
+          .map(([title, text, href]) => (
           <Link
             key={href}
             href={href}

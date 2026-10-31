@@ -75,7 +75,7 @@ describe("findScheduleConflicts", () => {
     const conflicts = findScheduleConflicts(baseAcude, [asAcude(otherAcude)]);
     expect(conflicts.some((conflict) => conflict.type === "scenario")).toBe(true);
   });
-  it("detecta cruce de docente aunque el escenario sea distinto", () => {
+  it("permite el mismo docente en escenarios distintos", () => {
     const conflicts = findScheduleConflicts(baseAcude, [
       {
         ...otherAcude,
@@ -83,7 +83,7 @@ describe("findScheduleConflicts", () => {
         schedule: [{ ...otherAcude.schedule[0], scenarioId: "auditorio" }],
       } as unknown as Acude,
     ]);
-    expect(conflicts.some((conflict) => conflict.type === "teacher")).toBe(true);
+    expect(conflicts).toHaveLength(0);
   });
   it("ignora ACUDES archivados", () => {
     const conflicts = findScheduleConflicts(baseAcude, [

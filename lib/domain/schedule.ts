@@ -34,8 +34,9 @@ interface ConflictCandidate {
 
 /**
  * Regla de oro del proyecto: un escenario no puede tener dos grupos ACUDE al
- * mismo tiempo, y un docente tampoco puede estar en dos grupos simultáneos.
- * Los ACUDES archivados liberan sus franjas.
+ * mismo tiempo. El docente puede repetirse en escenarios distintos; lo que se
+ * bloquea es el uso simultáneo del mismo espacio. Los ACUDES archivados liberan
+ * sus franjas.
  */
 export function findScheduleConflicts(
   candidate: ConflictCandidate,
@@ -60,19 +61,6 @@ export function findScheduleConflicts(
             startTime: otherSlot.startTime,
             endTime: otherSlot.endTime,
             resourceId: slot.scenarioId,
-          });
-        }
-        if (candidate.teacherId === other.teacherId) {
-          if (candidate.teacherId === "pending") continue;
-          conflicts.push({
-            type: "teacher",
-            acudeId: other.id,
-            acudeName: other.name,
-            slotId: otherSlot.id,
-            day: otherSlot.day,
-            startTime: otherSlot.startTime,
-            endTime: otherSlot.endTime,
-            resourceId: other.teacherId,
           });
         }
       }
