@@ -73,6 +73,27 @@ describe("registerSchema", () => {
       }).success,
     ).toBe(false);
   });
+  it("rechaza símbolos y números en el nombre", () => {
+    for (const displayName of ["Ana@Tdea", "Ana 123", "Ana-María", "@@@@"]) {
+      expect(
+        registerSchema.safeParse({
+          email: "a@b.co",
+          password: "123456",
+          displayName,
+          sex: "female",
+        }).success,
+      ).toBe(false);
+    }
+  });
+  it("normaliza espacios y acepta tildes y ñ", () => {
+    const parsed = registerSchema.parse({
+      email: "a@b.co",
+      password: "123456",
+      displayName: "  José   Ñáñez  ",
+      sex: "male",
+    });
+    expect(parsed.displayName).toBe("José Ñáñez");
+  });
 });
 
 describe("managerRegisterSchema", () => {
@@ -146,6 +167,20 @@ describe("acudeSchema", () => {
       ],
     });
     expect(result.success).toBe(false);
+  });
+  it("rechaza horas negativas o fuera de rango", () => {
+    for (const [startTime, endTime] of [
+      ["-141111111", "10:00"],
+      ["24:00", "25:00"],
+      ["08:60", "10:00"],
+    ]) {
+      expect(
+        acudeSchema.safeParse({
+          ...baseAcude,
+          schedule: [{ day: "tuesday", startTime, endTime, scenarioId: "coliseo" }],
+        }).success,
+      ).toBe(false);
+    }
   });
   it("acepta franjas consecutivas que se tocan", () => {
     const result = acudeSchema.safeParse({

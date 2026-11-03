@@ -6,6 +6,21 @@ z.config(z.locales.es());
 /** Los teclados móviles agregan espacios: se normaliza antes de validar. */
 const emailField = z.string().trim().toLowerCase().pipe(z.email("Correo inválido"));
 
+const personNameField = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/\s+/g, " "))
+  .pipe(
+    z
+      .string()
+      .min(2, "El nombre debe tener al menos 2 caracteres")
+      .max(80, "El nombre no puede superar 80 caracteres")
+      .regex(
+        /^[\p{L}\p{M}]+(?: [\p{L}\p{M}]+)*$/u,
+        "El nombre solo puede contener letras y espacios",
+      ),
+  );
+
 const optionalText = (max: number) =>
   z.preprocess(
     (value) => (value === "" || value === null ? undefined : value),
@@ -53,7 +68,7 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   email: emailField,
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(72),
-  displayName: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(80),
+  displayName: personNameField,
   sex: sexSchema,
   phone: optionalText(30),
 });
@@ -61,7 +76,7 @@ export const registerSchema = z.object({
 export const managerRegisterSchema = z.object({
   email: emailField,
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(72),
-  displayName: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(80),
+  displayName: personNameField,
   sex: sexSchema,
   phone: optionalText(30),
 });
