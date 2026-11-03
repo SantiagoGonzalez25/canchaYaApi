@@ -978,6 +978,35 @@ export function buildOpenApiSpec(): Json {
           },
         },
       },
+      "/api/reports/{kind}/pdf": {
+        get: {
+          tags: ["Reportes"],
+          summary: "Reporte en PDF",
+          description:
+            "Genera el PDF del reporte de inscripciones o asistencia con los mismos filtros y agrupación.",
+          parameters: [
+            {
+              name: "kind",
+              in: "path",
+              required: true,
+              schema: { type: "string", enum: ["enrollments", "attendance"] },
+            },
+            ...queryParams(reportQuerySchema),
+          ],
+          responses: {
+            "200": {
+              description: "Documento PDF",
+              content: {
+                "application/pdf": {
+                  schema: { type: "string", format: "binary" },
+                },
+              },
+            },
+            "403": r("Forbidden"),
+            "404": r("NotFound"),
+          },
+        },
+      },
     },
   };
 }
