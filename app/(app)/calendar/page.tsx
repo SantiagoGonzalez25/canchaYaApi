@@ -29,6 +29,7 @@ async function CalendarContent() {
       userSex={user.sex}
       myEnrollments={myEnrollments}
       isStudent={user.role === "student"}
+      isStaff={user.role !== "student"}
       canManage={user.role === "admin"}
     />
   );

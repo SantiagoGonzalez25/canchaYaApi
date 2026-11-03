@@ -28,6 +28,7 @@ interface CalendarProps {
   userSex: Sex | null;
   myEnrollments: Enrollment[];
   isStudent: boolean;
+  isStaff: boolean;
   canManage: boolean;
 }
 
@@ -88,6 +89,7 @@ export function Calendar({
   userSex,
   myEnrollments,
   isStudent,
+  isStaff,
   canManage,
 }: CalendarProps) {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
@@ -739,8 +741,15 @@ export function Calendar({
               </div>
               <div className="sm:col-span-2">
                 <div className="flex gap-2">
-                  <Link href={`/acudes/${selectedAcude.id}`} className={secondaryButtonClass}>
-                    Ver ficha completa
+                  <Link
+                    href={
+                      isStaff
+                        ? `/manager/acudes/${selectedAcude.id}`
+                        : `/acudes/${selectedAcude.id}`
+                    }
+                    className={secondaryButtonClass}
+                  >
+                    {isStaff ? "Ver ficha del ACUDE" : "Ver ficha completa"}
                   </Link>
                   {canManage && (
                     <Link href={`/manager/acudes/${selectedAcude.id}`} className={buttonClass}>

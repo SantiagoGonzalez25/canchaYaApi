@@ -125,11 +125,17 @@ async function AcudeManager({
       {acudes.length === 0 ? (
         <EmptyState
           title="No hay ACUDES con esos filtros"
-          description="Crea el primero o cambia los criterios de búsqueda."
+          description={
+            isAdmin
+              ? "Crea el primero o cambia los criterios de búsqueda."
+              : "Cambia los criterios de búsqueda o espera a que el administrador te asigne un ACUDE."
+          }
           action={
-            <Link href="/manager/acudes/new" className={buttonClass}>
-              Crear ACUDE
-            </Link>
+            isAdmin ? (
+              <Link href="/manager/acudes/new" className={buttonClass}>
+                Crear ACUDE
+              </Link>
+            ) : null
           }
         />
       ) : (

@@ -203,6 +203,7 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
     .slice(0, 6);
   const upcoming = upcomingSessions(acudes, new Date(), 6);
+  const reportAcudes = [...new Set(report.rows.map((row) => row.acude))].filter(Boolean);
 
   return (
     <>
@@ -256,6 +257,11 @@ async function StaffDashboard({ user }: { user: AuthUser }) {
           <div>
             <h2 className="text-lg font-bold text-slate-900">Inscripciones por fecha</h2>
             <p className="text-xs text-slate-500">Últimos 30 días</p>
+            {reportAcudes.length > 0 && (
+              <p className="mt-1 max-w-2xl text-xs font-medium text-slate-600">
+                ACUDES con actividad: {reportAcudes.join(" · ")}
+              </p>
+            )}
           </div>
           <Link
             href="/manager/reports?kind=enrollments"

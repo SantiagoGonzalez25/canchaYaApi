@@ -115,6 +115,7 @@ async function ReportsContent({
   }
   const keys = [...labels.keys()];
   const total = report.summary.total;
+  const reportAcudes = [...new Set(report.rows.map((row) => row.acude))].filter(Boolean);
 
   return (
     <>
@@ -334,6 +335,11 @@ async function ReportsContent({
               Rango {report.from || "sin límite"} → {report.to || "hoy"} · {report.summary.total}{" "}
               registros · generado {new Date(report.generatedAt).toLocaleString("es-CO")}
             </p>
+            {reportAcudes.length > 0 && (
+              <p className="mt-1 text-xs font-medium text-slate-600">
+                ACUDES: {reportAcudes.join(" · ")}
+              </p>
+            )}
           </div>
           <ReportActions report={report} />
         </div>
