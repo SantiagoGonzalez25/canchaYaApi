@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { weekdayOf } from "@/lib/labels";
 import { selectClass } from "./ui";
 
 export interface AttendanceAcudeOption {
@@ -26,13 +27,17 @@ export function AttendanceFilters({
 }) {
   const router = useRouter();
   const current = acudes.find((acude) => acude.id === acudeId) ?? acudes[0];
+  const daySlots = current?.slots.filter((slot) => slot.day === weekdayOf(date)) ?? [];
+  const selectedSlotId = daySlots.some((slot) => slot.id === slotId)
+    ? slotId
+    : (daySlots[0]?.id ?? "");
 
   const go = (nextAcudeId: string, nextSlotId: string, nextDate: string) => {
     const params = new URLSearchParams({
       acudeId: nextAcudeId,
-      slotId: nextSlotId,
       date: nextDate,
     });
+    if (nextSlotId) params.set("slotId", nextSlotId);
     router.push(`/manager/attendance?${params.toString()}`);
   };
 
@@ -44,7 +49,9 @@ export function AttendanceFilters({
           onChange={(event) => {
             const next = acudes.find((acude) => acude.id === event.target.value);
             if (!next) return;
-            go(next.id, next.slots[0]?.id ?? "", date);
+            const nextDay = weekdayOf(date);
+            const nextSlot = next.slots.find((slot) => slot.day === nextDay);
+            go(next.id, nextSlot?.id ?? "", date);
           }}
           className={selectClass}
           aria-label="ACUDE"
@@ -62,28 +69,38 @@ export function AttendanceFilters({
       )}
 
       <select
-        value={slotId}
+        value={selectedSlotId}
         onChange={(event) => go(acudeId, event.target.value, date)}
         className={selectClass}
         aria-label="Franja"
+        disabled={daySlots.length === 0}
       >
-        {current?.slots.map((slot) => (
-          <option key={slot.id} value={slot.id}>
-            {weekdayLabels[slot.day] ?? slot.day} {slot.startTime}–{slot.endTime}
-          </option>
-        ))}
+        {daySlots.length === 0 ? (
+          <option value="">Sin franjas para este día</option>
+        ) : (
+          daySlots.map((slot) => (
+            <option key={slot.id} value={slot.id}>
+              {weekdayLabels[slot.day] ?? slot.day} {slot.startTime}–{slot.endTime}
+            </option>
+          ))
+        )}
       </select>
 
       <input
         type="date"
         value={date}
-        onChange={(event) => go(acudeId, slotId, event.target.value)}
+        onChange={(event) => {
+          const nextDate = event.target.value;
+          const nextDay = weekdayOf(nextDate);
+          const nextSlot = current?.slots.find((slot) => slot.day === nextDay);
+          go(acudeId, nextSlot?.id ?? "", nextDate);
+        }}
         className={selectClass}
         aria-label="Fecha de la sesión"
       />
 
       <p className="text-xs text-slate-500 sm:col-span-3">
-        La lista se actualiza automáticamente al cambiar el ACUDE, la franja o la fecha.
+        Las franjas se ajustan automáticamente al día de la fecha seleccionada.
       </p>
     </div>
   );

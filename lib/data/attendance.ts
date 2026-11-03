@@ -9,6 +9,7 @@ import type {
   Enrollment,
 } from "../types";
 import type { SaveAttendanceInput } from "../schemas";
+import { weekdayOf } from "../labels";
 import { ACUDES } from "./acudes";
 import { listActiveEnrollments } from "./enrollments";
 
@@ -52,6 +53,13 @@ export async function saveAttendance(
   }
   const slot = acude.schedule.find((item) => item.id === input.slotId);
   if (!slot) throw new ApiError(404, "NOT_FOUND", "La franja horaria no existe en este ACUDE");
+  if (slot.day !== weekdayOf(input.date)) {
+    throw new ApiError(
+      400,
+      "VALIDATION_ERROR",
+      "La franja seleccionada no corresponde al día de la fecha indicada",
+    );
+  }
 
   const active = await listActiveEnrollments(input.acudeId, input.slotId);
   const byId = new Map(active.map((item) => [item.id, item]));
