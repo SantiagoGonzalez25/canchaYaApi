@@ -57,6 +57,24 @@ export function toAcude(id: string, data: AcudeDoc): Acude {
   };
 }
 
+/**
+ * Inscripciones que impiden archivar un ACUDE. Se consulta por `acudeId`
+ * únicamente para cubrir todas las franjas; además se toleran documentos
+ * antiguos sin `status`, que se consideran activos.
+ */
+async function activeEnrollmentsForAcude(
+  tx: FirebaseFirestore.Transaction,
+  acudeId: string,
+): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  const snap = await tx.get(
+    db().collection(ENROLLMENTS).where("acudeId", "==", acudeId),
+  );
+  return snap.docs.filter((doc) => {
+    const status = (doc.data() as { status?: string }).status;
+    return status !== "canceled";
+  });
+}
+
 /** Conserva los ids de franja existentes y genera ids estables para las nuevas. */
 export function normalizeSchedule(
   schedule: ScheduleSlotInput[],
@@ -329,22 +347,17 @@ export async function updateAcude(
 
     const allSnap = await tx.get(firestore.collection(ACUDES));
     await assertScenariosExist(tx, schedule);
-    const activeSnap = await tx.get(
-      firestore
-        .collection(ENROLLMENTS)
-        .where("acudeId", "==", id)
-        .where("status", "==", "active"),
-    );
-    if (input.status === "archived" && activeSnap.size > 0) {
+    const activeEnrollments = await activeEnrollmentsForAcude(tx, id);
+    if (input.status === "archived" && activeEnrollments.length > 0) {
       throw new ApiError(
         409,
         "INVALID_STATE",
-        `No puedes archivar un ACUDE con ${activeSnap.size} inscripciones activas. Cancélalas primero.`,
+        `No puedes archivar un ACUDE con ${activeEnrollments.length} inscripciones activas. Cancélalas primero.`,
       );
     }
 
     const counts = new Map<string, number>();
-    for (const doc of activeSnap.docs) {
+    for (const doc of activeEnrollments) {
       const data = doc.data() as { slotId: string };
       counts.set(data.slotId, (counts.get(data.slotId) ?? 0) + 1);
     }
@@ -383,7 +396,7 @@ export async function updateAcude(
     assertNoScheduleConflicts(conflicts);
 
     // Recalcular el total y los contadores por franja con las inscripciones activas.
-    const currentEnrolled = activeSnap.size;
+    const currentEnrolled = activeEnrollments.length;
     const slotEnrolled = Object.fromEntries(
       schedule.map((slot) => [slot.id, counts.get(slot.id) ?? 0]),
     );
@@ -406,17 +419,12 @@ export async function archiveAcude(id: string): Promise<Acude> {
     if (!snap.exists || !isAcudeDocument(snap.data())) {
       throw new ApiError(404, "NOT_FOUND", "ACUDE no encontrado");
     }
-    const activeSnap = await tx.get(
-      firestore
-        .collection(ENROLLMENTS)
-        .where("acudeId", "==", id)
-        .where("status", "==", "active"),
-    );
-    if (activeSnap.size > 0) {
+    const activeEnrollments = await activeEnrollmentsForAcude(tx, id);
+    if (activeEnrollments.length > 0) {
       throw new ApiError(
         409,
         "INVALID_STATE",
-        `No puedes archivar un ACUDE con ${activeSnap.size} inscripciones activas. Cancélalas primero.`,
+        `No puedes archivar un ACUDE con ${activeEnrollments.length} inscripciones activas. Cancélalas primero.`,
       );
     }
     const data = {
