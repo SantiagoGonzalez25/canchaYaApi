@@ -210,6 +210,24 @@ export async function createEnrollment(
 }
 
 /** Cancelación idempotente: libera el cupo de inmediato. */
+/** Cancela todas las inscripciones activas de un usuario y libera sus cupos. */
+export async function cancelActiveEnrollmentsForUser(
+  actor: AuthUser,
+  userId: string,
+): Promise<number> {
+  const snap = await db()
+    .collection(ENROLLMENTS)
+    .where("userId", "==", userId)
+    .where("status", "==", "active")
+    .get();
+  let canceled = 0;
+  for (const doc of snap.docs) {
+    await cancelEnrollment(actor, doc.id);
+    canceled += 1;
+  }
+  return canceled;
+}
+
 export async function cancelEnrollment(
   actor: AuthUser,
   id: string,

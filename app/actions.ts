@@ -31,8 +31,8 @@ import {
   createSessionCookie,
   login,
   register,
-  updateUserAccess,
 } from "@/lib/services/auth";
+import { changeUserAccess } from "@/lib/services/user-admin";
 import { deleteStorageImage, uploadAcudeImage } from "@/lib/services/storage";
 import {
   clearSessionCookie,
@@ -295,16 +295,7 @@ export async function updateUserAccessAction(formData: FormData): Promise<void> 
     redirect(`/manager/users-all?error=${encodeURIComponent(firstIssue(parsed.error))}`);
   }
   try {
-    if (
-      id === admin.uid &&
-      ((parsed.data.role && parsed.data.role !== "admin") ||
-        (parsed.data.status && parsed.data.status !== "active"))
-    ) {
-      throw new Error(
-        "No puedes quitarte el rol de administrador ni deshabilitar tu propia cuenta",
-      );
-    }
-    await updateUserAccess(id, parsed.data);
+    await changeUserAccess(admin, id, parsed.data);
   } catch (err) {
     redirect(`/manager/users-all?error=${encodeURIComponent(messageOf(err))}`);
   }

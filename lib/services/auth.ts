@@ -49,7 +49,7 @@ export function toAuthUser(decoded: DecodedUser): AuthUser {
 /** Verifica un idToken de Firebase (Authorization: Bearer ...). */
 export async function verifyIdToken(idToken: string): Promise<AuthUser> {
   try {
-    return toAuthUser(await adminAuth().verifyIdToken(idToken));
+    return toAuthUser(await adminAuth().verifyIdToken(idToken, true));
   } catch {
     throw new ApiError(401, "UNAUTHENTICATED", "Sesión inválida o expirada");
   }
@@ -60,7 +60,7 @@ export async function verifySessionCookie(cookie: string): Promise<AuthUser> {
   try {
     // Sin `checkRevoked` se evita una llamada extra a Firebase Auth en cada
     // navegación. La cookie expira en 5 días y el logout la elimina.
-    return toAuthUser(await adminAuth().verifySessionCookie(cookie));
+    return toAuthUser(await adminAuth().verifySessionCookie(cookie, true));
   } catch {
     throw new ApiError(401, "UNAUTHENTICATED", "Sesión inválida o expirada");
   }

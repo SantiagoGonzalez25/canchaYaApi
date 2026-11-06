@@ -52,6 +52,13 @@ async function UsersContent({
     <>
       {saved && <Alert kind="ok">Cambios guardados correctamente.</Alert>}
       {error && <Alert kind="error">{error}</Alert>}
+      <div className="mb-4">
+        <Alert kind="info">
+          Banear a un estudiante cancela sus inscripciones activas y libera cupos. Un profesor con
+          ACUDES asignados no puede ser baneado, desactivado ni degradado hasta reasignar o archivar
+          sus ACUDES.
+        </Alert>
+      </div>
 
       {selectedUser && (
         <section className={`${cardClass} mb-5 p-5`}>
