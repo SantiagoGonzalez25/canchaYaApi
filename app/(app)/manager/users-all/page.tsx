@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { updateUserAccessAction } from "@/app/actions";
+import { cancelEnrollmentAdminAction, updateUserAccessAction } from "@/app/actions";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 import {
   Alert,
   Badge,
@@ -91,9 +92,23 @@ async function UsersContent({
                       {formatDate(item.enrolledAt)}
                     </p>
                   </div>
-                  <Badge tone={item.status === "active" ? "teal" : "neutral"}>
-                    {item.status === "active" ? "Activa" : "Cancelada"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={item.status === "active" ? "teal" : "neutral"}>
+                      {item.status === "active" ? "Activa" : "Cancelada"}
+                    </Badge>
+                    {item.status === "active" && (
+                      <form action={cancelEnrollmentAdminAction}>
+                        <input type="hidden" name="id" value={item.id} />
+                        <input type="hidden" name="userId" value={selectedUser.uid} />
+                        <ConfirmSubmit
+                          message={`¿Quitar a ${selectedUser.name} de "${item.acudeName}"? El cupo se liberará.`}
+                          className={secondaryButtonClass}
+                        >
+                          Quitar del ACUDE
+                        </ConfirmSubmit>
+                      </form>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

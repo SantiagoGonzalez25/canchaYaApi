@@ -303,6 +303,24 @@ export async function updateUserAccessAction(formData: FormData): Promise<void> 
   redirect("/manager/users-all?saved=1");
 }
 
+export async function cancelEnrollmentAdminAction(formData: FormData): Promise<void> {
+  const admin = await requireWebUser("admin");
+  const id = String(formData.get("id") ?? "");
+  const userId = String(formData.get("userId") ?? "");
+  try {
+    await cancelEnrollment(admin, id);
+  } catch (err) {
+    redirect(
+      `/manager/users-all?user=${encodeURIComponent(userId)}&error=${encodeURIComponent(messageOf(err))}`,
+    );
+  }
+  revalidatePath("/manager/users-all");
+  revalidatePath("/manager/acudes");
+  revalidatePath("/calendar");
+  revalidatePath("/acudes");
+  redirect(`/manager/users-all?user=${encodeURIComponent(userId)}&saved=1`);
+}
+
 export async function createManagerAction(
   _prev: FormState,
   formData: FormData,
