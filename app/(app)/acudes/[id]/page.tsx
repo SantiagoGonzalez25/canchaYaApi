@@ -69,7 +69,45 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
               Cada franja es un subgrupo con cupo propio. El escenario se reserva institucionalmente
               para el grupo, nunca para una persona.
             </p>
-            <div className="mt-4 overflow-x-auto">
+            <div className="mt-4 grid gap-3 sm:hidden">
+              {acude.schedule.map((slot) => (
+                <div
+                  key={slot.id}
+                  className="rounded-xl border border-slate-200 bg-slate-50/60 p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">
+                        {WEEKDAY_LABELS[slot.day]}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {slot.startTime}–{slot.endTime}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[11px] font-semibold text-slate-500">
+                      {slot.enrolled}/{slot.capacity}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-700">{slot.scenarioName}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <ProgressBar
+                        value={slot.occupancyPct}
+                        tone={
+                          slot.occupancyPct >= 90
+                            ? "rose"
+                            : slot.occupancyPct >= 60
+                              ? "amber"
+                              : "teal"
+                        }
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-500">{slot.occupancyPct}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[540px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
