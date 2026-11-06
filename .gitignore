@@ -45,6 +45,13 @@ serviceAccount*.json
 /Guia_2 App_Movil_Biblioteca.pdf
 /Informe_de_hallazgos_APA (1).docx
 
+# Documentación interna y reglas de seguridad (no se publican)
+/INFORME.md
+/Agent.md
+/AGENTS.md
+/GUIA_PRUEBAS_MANUALES.md
+/firestore.rules
+
 # Salidas temporales de herramientas y reportes generados
 /coverage
 /test-results

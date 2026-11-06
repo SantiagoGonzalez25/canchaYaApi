@@ -171,11 +171,3 @@ pnpm test
 ```
 
 Incluye esquemas Zod, manejo uniforme de errores, guard de roles, reglas de cruces, agenda, reportes y un test que compara las rutas documentadas en OpenAPI con los `route.ts` reales.
-
-## Informe del proyecto
-
-El detalle de lo construido, decisiones de arquitectura, verificación y limitaciones está en [`INFORME.md`](./INFORME.md).
-
-## Pruebas manuales
-
-La guía paso a paso para verificar roles, asistencia, reportes, imágenes y despliegue está en [`GUIA_PRUEBAS_MANUALES.md`](./GUIA_PRUEBAS_MANUALES.md).
