@@ -176,11 +176,10 @@ export async function listAttendanceSessions(
   );
   const scenarios = await listScenarioOptions();
   const scenarioNames = new Map(scenarios.map((item) => [item.id, item.name]));
-  const records = await listAttendance({
-    from,
-    to,
-    ...(user.role === "manager" ? { teacherId: user.uid } : {}),
-  });
+  const acudeIds = new Set(acudes.map((acude) => acude.id));
+  const records = (await listAttendance({ from, to })).filter((item) =>
+    acudeIds.has(item.acudeId),
+  );
   const saved = new Set(records.map((item) => `${item.acudeId}:${item.slotId}:${item.date}`));
   const sessions: AttendanceSession[] = [];
 
