@@ -613,10 +613,6 @@ export function Calendar({
               })}
             </div>
           )}
-          <p className="border-t border-slate-100 px-4 py-3 text-[11px] text-slate-500">
-            Cada columna es un escenario. Las franjas de la misma hora quedan lado a lado, sin
-            apilarse.
-          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
