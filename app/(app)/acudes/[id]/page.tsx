@@ -119,11 +119,11 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
             <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Docente</dt>
-                <dd className="mt-1 font-medium text-slate-800">{acude.teacherName}</dd>
+                <dd className="mt-1 break-words font-medium text-slate-800">{acude.teacherName}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Disciplina</dt>
-                <dd className="mt-1 font-medium text-slate-800">{acude.discipline}</dd>
+                <dd className="mt-1 break-words font-medium text-slate-800">{acude.discipline}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Cupo por subgrupo</dt>
@@ -133,9 +133,9 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Asistencia mínima</dt>
                 <dd className="mt-1 font-medium text-slate-800">{acude.attendanceMin}%</dd>
               </div>
-              <div className="sm:col-span-2">
+              <div className="min-w-0 sm:col-span-2">
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">Requisitos</dt>
-                <dd className="mt-1 whitespace-pre-line text-slate-700">
+                <dd className="mt-1 whitespace-pre-line break-words text-slate-700 [overflow-wrap:anywhere]">
                   {acude.requirements || "Carné institucional y vestimenta adecuada."}
                 </dd>
               </div>
