@@ -101,7 +101,7 @@ export async function deleteScenario(id: string): Promise<void> {
     throw new ApiError(
       409,
       "INVALID_STATE",
-      "No puedes eliminar un escenario que está asignado a un ACUDE activo",
+      "No puedes eliminar un escenario",
     );
   }
   const snap = await scenarioRef.get();
