@@ -210,9 +210,12 @@ export async function listLiveAcudes(
   return result;
 }
 
-export async function getLiveAcude(id: string): Promise<LiveAcude> {
+export async function getLiveAcude(
+  id: string,
+  options: { allowUnpublished?: boolean } = {},
+): Promise<LiveAcude> {
   const acude = await getAcude(id);
-  if (acude.status !== "published") {
+  if (!options.allowUnpublished && acude.status !== "published") {
     throw new ApiError(404, "NOT_FOUND", "El ACUDE no está publicado en la cartelera");
   }
   const snap = await db()
@@ -348,11 +351,12 @@ export async function updateAcude(
     const allSnap = await tx.get(firestore.collection(ACUDES));
     await assertScenariosExist(tx, schedule);
     const activeEnrollments = await activeEnrollmentsForAcude(tx, id);
-    if (input.status === "archived" && activeEnrollments.length > 0) {
+    if (input.status !== "published" && activeEnrollments.length > 0) {
+      const estado = input.status === "draft" ? "borrador" : "archivado";
       throw new ApiError(
         409,
         "INVALID_STATE",
-        `No puedes archivar un ACUDE con ${activeEnrollments.length} inscripciones activas. Cancélalas primero.`,
+        `No puedes guardar en ${estado} un ACUDE con ${activeEnrollments.length} inscripciones activas. Publícalo o cancela las inscripciones primero.`,
       );
     }
 

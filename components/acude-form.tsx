@@ -420,7 +420,7 @@ export function AcudeForm({
           <div className="mt-4 flex flex-col gap-4">
             <Field
               label="Estado"
-              hint="Solo los publicados aparecen en cartelera, calendario y ocupación."
+              hint="Solo los publicados aparecen en cartelera, calendario y ocupación. Con inscripciones activas solo puedes mantenerlo publicado."
             >
               <select
                 value={status}

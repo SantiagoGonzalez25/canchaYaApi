@@ -4,11 +4,16 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EnrollmentPanel } from "@/components/enrollment-panel";
 import { AcudeImage } from "@/components/acude-image";
-import { Badge, buttonClass, cardClass, PageHeader, ProgressBar, secondaryButtonClass } from "@/components/ui";
+import { Alert, Badge, buttonClass, cardClass, PageHeader, ProgressBar, secondaryButtonClass } from "@/components/ui";
 import { getLiveAcude } from "@/lib/data/acudes";
 import { listMyActiveEnrollmentForAcude } from "@/lib/data/enrollments";
 import { ApiError } from "@/lib/errors";
-import { CATEGORY_LABELS, formatDate, WEEKDAY_LABELS } from "@/lib/labels";
+import {
+  ACUDE_STATUS_LABELS,
+  CATEGORY_LABELS,
+  formatDate,
+  WEEKDAY_LABELS,
+} from "@/lib/labels";
 import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Detalle del ACUDE" };
@@ -16,13 +21,16 @@ export const metadata: Metadata = { title: "Detalle del ACUDE" };
 async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["params"] }) {
   const user = await requirePageUser();
   const { id } = await params;
-  const acude = await getLiveAcude(id).catch((err) => {
+  const existing =
+    user.role === "student" ? await listMyActiveEnrollmentForAcude(user.uid, id) : null;
+  const acude = await getLiveAcude(id, {
+    allowUnpublished:
+      user.role === "admin" || user.role === "manager" || Boolean(existing),
+  }).catch((err) => {
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   });
   if (user.role === "manager" && acude.teacherId !== user.uid) notFound();
-  const existing =
-    user.role === "student" ? await listMyActiveEnrollmentForAcude(user.uid, acude.id) : null;
 
   return (
     <>
@@ -50,6 +58,17 @@ async function AcudeDetail({ params }: { params: PageProps<"/acudes/[id]">["para
           ) : null
         }
       />
+
+      {acude.status !== "published" && (
+        <div className="mb-4">
+          <Alert kind="info">
+            Este ACUDE está en estado <strong>{ACUDE_STATUS_LABELS[acude.status]}</strong>.{" "}
+            {user.role === "student"
+              ? "Puedes consultar tu inscripción y cancelarla si lo necesitas."
+              : "Solo es visible para administración."}
+          </Alert>
+        </div>
+      )}
 
       {acude.imageUrl && (
         <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200">
