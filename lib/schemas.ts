@@ -291,7 +291,7 @@ export const attendanceSessionsQuerySchema = z.object({
   from: optionalDate,
   to: optionalDate,
   acudeId: idField.optional(),
-  status: z.enum(["pending", "saved"]).optional(),
+  status: z.enum(["scheduled", "pending", "saved"]).optional(),
 });
 
 export const attendanceQuerySchema = z.object({

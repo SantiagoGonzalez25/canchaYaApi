@@ -305,6 +305,7 @@ describe("attendanceSessionsQuerySchema", () => {
     });
     expect(parsed).toMatchObject({ status: "pending", acudeId: "futsal-formativo" });
     expect(attendanceSessionsQuerySchema.safeParse({ status: "saved" }).success).toBe(true);
+    expect(attendanceSessionsQuerySchema.safeParse({ status: "scheduled" }).success).toBe(true);
     expect(attendanceSessionsQuerySchema.safeParse({ status: "canceled" }).success).toBe(false);
     expect(attendanceSessionsQuerySchema.safeParse({ from: "ayer" }).success).toBe(false);
   });

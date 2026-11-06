@@ -48,11 +48,13 @@ function sessionHref(
   session: AttendanceSession,
   from: string,
   filterAcudeId: string,
+  acudeStatus: string | undefined,
 ): string {
   return attendanceHref({
     from,
     session: session.sessionKey,
     acudeId: filterAcudeId,
+    acudeStatus,
   });
 }
 
@@ -75,21 +77,26 @@ async function AttendanceContent({
 }) {
   const user = await requirePageStaff();
   const params = await searchParams;
-  const acudes = (
+  const assignedAcudes = (
     await listAcudes(user.role === "manager" ? { teacherId: user.uid } : {})
   ).filter((acude) => acude.status !== "archived");
+  // El profesor solo trabaja con ACUDES publicados; el admin supervisa todos.
+  const acudes =
+    user.role === "manager"
+      ? assignedAcudes.filter((acude) => acude.status === "published")
+      : assignedAcudes;
 
   if (acudes.length === 0) {
     return (
       <EmptyState
         title={
           user.role === "manager"
-            ? "No tienes un ACUDE asignado"
+            ? "No tienes ACUDES activos asignados"
             : "Primero crea un ACUDE"
         }
         description={
           user.role === "manager"
-            ? "El administrador debe asignarte un ACUDE y una franja horaria para poder registrar asistencia."
+            ? "Tus ACUDES en borrador no aparecen en asistencia. Cuando el administrador los publique, podrás pasar lista."
             : "La asistencia se registra sobre inscripciones activas de una franja."
         }
         action={
@@ -106,12 +113,28 @@ async function AttendanceContent({
   const today = todayKey();
   const currentWeekStart = startOfWeek(today);
   const oldestWeekStart = addDays(currentWeekStart, -7);
+  const latestWeekStart = addDays(currentWeekStart, 7);
   const windowStart = addDays(today, -ATTENDANCE_EDIT_WINDOW_DAYS);
 
   const requestedSession = first(params.session);
   const requestedAcudeId = first(params.acudeId);
   const requestedSlotId = first(params.slotId);
   const requestedDate = first(params.date);
+  const requestedAcudeStatus = first(params.acudeStatus);
+  const acudeStatusFilter: "all" | "active" | "draft" =
+    user.role === "manager"
+      ? "active"
+      : requestedAcudeStatus === "active" || requestedAcudeStatus === "draft"
+        ? requestedAcudeStatus
+        : "all";
+  const statusOptions = acudes.filter((acude) =>
+    acudeStatusFilter === "all"
+      ? true
+      : acudeStatusFilter === "active"
+        ? acude.status === "published"
+        : acude.status === "draft",
+  );
+  const statusQuery = user.role === "admin" ? acudeStatusFilter : undefined;
 
   let selectedAcudeId = "";
   let selectedSlotId = "";
@@ -138,7 +161,9 @@ async function AttendanceContent({
     selectedDate = requestedDate;
   }
 
-  const filterAcudeId = acudes.some((acude) => acude.id === requestedAcudeId)
+  const filterAcudeId = statusOptions.some(
+    (acude) => acude.id === requestedAcudeId,
+  )
     ? requestedAcudeId ?? ""
     : "";
 
@@ -149,7 +174,7 @@ async function AttendanceContent({
       ? requestedFrom
       : today;
   let from = startOfWeek(baseDate);
-  if (from > currentWeekStart) from = currentWeekStart;
+  if (from > latestWeekStart) from = latestWeekStart;
   if (from < oldestWeekStart) from = oldestWeekStart;
 
   const selectedAcude = acudes.find((acude) => acude.id === selectedAcudeId);
@@ -176,20 +201,33 @@ async function AttendanceContent({
         )?.name ?? "Escenario")
       : "Por asignar";
 
-  const sessions = await listAttendanceSessions(user, {
+  const rawSessions = await listAttendanceSessions(user, {
     from,
     to: addDays(from, 6),
     ...(filterAcudeId ? { acudeId: filterAcudeId } : {}),
   });
+  const sessions = rawSessions.filter((session) =>
+    acudeStatusFilter === "all"
+      ? true
+      : acudeStatusFilter === "active"
+        ? session.acudeStatus === "published"
+        : session.acudeStatus === "draft",
+  );
   const groupedSessions = groupByDate(sessions);
-  const weekHref = attendanceHref({ from, acudeId: filterAcudeId });
+  const weekHref = attendanceHref({
+    from,
+    acudeId: filterAcudeId,
+    acudeStatus: statusQuery,
+  });
   const previousWeekHref = attendanceHref({
     from: addDays(from, -7),
     acudeId: filterAcudeId,
+    acudeStatus: statusQuery,
   });
   const nextWeekHref = attendanceHref({
     from: addDays(from, 7),
     acudeId: filterAcudeId,
+    acudeStatus: statusQuery,
   });
 
   return (
@@ -209,9 +247,14 @@ async function AttendanceContent({
             <Link href={weekHref} className={secondaryButtonClass}>
               ← Volver a mis sesiones
             </Link>
-            <Badge tone={roster.attendance.length > 0 ? "teal" : "amber"}>
-              {roster.attendance.length > 0 ? "Guardada" : "Pendiente"}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {user.role === "admin" && selectedAcude.status === "draft" && (
+                <Badge tone="violet">Borrador</Badge>
+              )}
+              <Badge tone={roster.attendance.length > 0 ? "teal" : "amber"}>
+                {roster.attendance.length > 0 ? "Guardada" : "Pendiente"}
+              </Badge>
+            </div>
           </div>
 
           <section className={`${cardClass} p-5`}>
@@ -286,7 +329,7 @@ async function AttendanceContent({
                   ← Semana anterior
                 </span>
               )}
-              {from < currentWeekStart ? (
+              {from < latestWeekStart ? (
                 <Link href={nextWeekHref} className={secondaryButtonClass}>
                   Semana siguiente →
                 </Link>
@@ -298,28 +341,41 @@ async function AttendanceContent({
             </div>
           </div>
 
-          {acudes.length > 1 && (
+          {(statusOptions.length > 1 || user.role === "admin") && (
             <form className="mb-5 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <input type="hidden" name="from" value={from} />
+              {user.role === "admin" && (
+                <select
+                  name="acudeStatus"
+                  defaultValue={acudeStatusFilter}
+                  className={`${selectClass} min-w-44`}
+                  aria-label="Filtrar por estado del ACUDE"
+                >
+                  <option value="all">Todos los estados</option>
+                  <option value="active">Solo activos</option>
+                  <option value="draft">Solo borradores</option>
+                </select>
+              )}
               <select
                 name="acudeId"
                 defaultValue={filterAcudeId}
                 className={`${selectClass} min-w-52 flex-1`}
                 aria-label="Filtrar por ACUDE"
               >
-                <option value="">Todos mis ACUDES</option>
-                {acudes.map((acude) => (
+                <option value="">
+                  {user.role === "manager" ? "Todos mis ACUDES" : "Todos los ACUDES"}
+                </option>
+                {statusOptions.map((acude) => (
                   <option key={acude.id} value={acude.id}>
                     {acude.name}
+                    {acude.status === "draft" ? " (borrador)" : ""}
                   </option>
                 ))}
               </select>
               <button className={buttonClass}>Filtrar</button>
-              {filterAcudeId && (
-                <Link
-                  href={attendanceHref({ from })}
-                  className={secondaryButtonClass}
-                >
+              {(filterAcudeId ||
+                (user.role === "admin" && acudeStatusFilter !== "all")) && (
+                <Link href={attendanceHref({ from })} className={secondaryButtonClass}>
                   Limpiar
                 </Link>
               )}
@@ -332,8 +388,9 @@ async function AttendanceContent({
                 {user.role === "manager" ? "Mis sesiones" : "Sesiones"}
               </h2>
               <p className="text-sm text-slate-500">
-                Calculadas desde el horario de cada ACUDE. Solo se muestran clases
-                hasta hoy.
+                Calculadas desde el horario de cada ACUDE. Las clases futuras
+                aparecen como programadas; solo puedes pasar lista desde el día de
+                la sesión.
               </p>
             </div>
             <Badge tone="neutral">{sessions.length}</Badge>
@@ -363,17 +420,33 @@ async function AttendanceContent({
                     </span>
                   </div>
                   <ul className="divide-y divide-slate-100">
-                    {group.sessions.map((session) => (
-                      <li key={session.sessionKey}>
-                        <Link
-                          href={sessionHref(session, from, filterAcudeId)}
-                          className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition hover:bg-slate-50"
-                        >
+                    {group.sessions.map((session) => {
+                      const isScheduled = session.status === "scheduled";
+                      const statusTone: "teal" | "amber" | "blue" =
+                        session.status === "saved"
+                          ? "teal"
+                          : isScheduled
+                            ? "blue"
+                            : "amber";
+                      const statusLabel =
+                        session.status === "saved"
+                          ? "Guardada"
+                          : isScheduled
+                            ? "Programada"
+                            : "Pendiente";
+                      const content = (
+                        <>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-800">
-                              {session.startTime}–{session.endTime} ·{" "}
-                              {session.acudeName}
-                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-semibold text-slate-800">
+                                {session.startTime}–{session.endTime} ·{" "}
+                                {session.acudeName}
+                              </p>
+                              {user.role === "admin" &&
+                                session.acudeStatus === "draft" && (
+                                  <Badge tone="violet">Borrador</Badge>
+                                )}
+                            </div>
                             <p className="mt-0.5 truncate text-xs text-slate-500">
                               {session.scenarioName} · {session.teacherName} ·{" "}
                               {session.enrolled} inscrito
@@ -381,20 +454,41 @@ async function AttendanceContent({
                             </p>
                           </div>
                           <div className="flex shrink-0 items-center gap-3">
-                            <Badge
-                              tone={session.status === "saved" ? "teal" : "amber"}
-                            >
-                              {session.status === "saved"
-                                ? "Guardada"
-                                : "Pendiente"}
-                            </Badge>
-                            <span className="text-xs font-semibold text-teal-700">
-                              Abrir →
-                            </span>
+                            <Badge tone={statusTone}>{statusLabel}</Badge>
+                            {isScheduled ? (
+                              <span className="text-xs font-semibold text-slate-400">
+                                Disponible el día de la clase
+                              </span>
+                            ) : (
+                              <span className="text-xs font-semibold text-teal-700">
+                                Abrir →
+                              </span>
+                            )}
                           </div>
-                        </Link>
-                      </li>
-                    ))}
+                        </>
+                      );
+                      return (
+                        <li key={session.sessionKey}>
+                          {isScheduled ? (
+                            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 opacity-75">
+                              {content}
+                            </div>
+                          ) : (
+                            <Link
+                              href={sessionHref(
+                                session,
+                                from,
+                                filterAcudeId,
+                                statusQuery,
+                              )}
+                              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition hover:bg-slate-50"
+                            >
+                              {content}
+                            </Link>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </section>
               ))}
@@ -412,7 +506,7 @@ export default function AttendancePage(props: PageProps<"/manager/attendance">) 
       <PageHeader
         eyebrow="Asistencia"
         title="Control de asistencia"
-        description="Elige una sesión real de tu horario y pasa lista. Solo se muestran clases hasta hoy; puedes corregir sesiones de las últimas dos semanas."
+        description="Elige una sesión real de tu horario. Las clases futuras aparecen como programadas y solo puedes pasar lista desde el día de la sesión; puedes corregir sesiones de las últimas dos semanas."
       />
       <Suspense
         fallback={

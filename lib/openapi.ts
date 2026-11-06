@@ -958,7 +958,7 @@ export function buildOpenApiSpec(): Json {
           tags: ["Asistencia"],
           summary: "Sesiones reales para pasar asistencia",
           description:
-            "Calcula las sesiones a partir del horario de los ACUDES. Un profesor solo ve sus ACUDES; el administrador ve todos. Solo se devuelven sesiones hasta hoy y dentro de la ventana de corrección.",
+            "Calcula las sesiones a partir del horario de los ACUDES. Un profesor solo ve sus ACUDES publicados; el administrador ve todos (incluidos borradores, con `acudeStatus`). Las sesiones futuras se devuelven como `scheduled` y no permiten asistencia hasta su fecha.",
           parameters: queryParams(attendanceSessionsQuerySchema),
           responses: {
             "200": {
@@ -974,6 +974,7 @@ export function buildOpenApiSpec(): Json {
                         sessionKey: { type: "string" },
                         acudeId: { type: "string" },
                         acudeName: { type: "string" },
+                        acudeStatus: { type: "string", enum: ["draft", "published"] },
                         slotId: { type: "string" },
                         date: { type: "string", format: "date" },
                         day: { type: "string" },
@@ -984,12 +985,16 @@ export function buildOpenApiSpec(): Json {
                         teacherId: { type: "string" },
                         teacherName: { type: "string" },
                         enrolled: { type: "integer" },
-                        status: { type: "string", enum: ["pending", "saved"] },
+                        status: {
+                          type: "string",
+                          enum: ["scheduled", "pending", "saved"],
+                        },
                       },
                       required: [
                         "sessionKey",
                         "acudeId",
                         "acudeName",
+                        "acudeStatus",
                         "slotId",
                         "date",
                         "day",

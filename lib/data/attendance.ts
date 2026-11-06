@@ -54,6 +54,13 @@ export async function saveAttendance(
   if (user.role === "manager" && acude.teacherId !== user.uid) {
     throw new ApiError(403, "FORBIDDEN", "Solo puedes registrar asistencia de tus ACUDES");
   }
+  if (user.role === "manager" && acude.status !== "published") {
+    throw new ApiError(
+      400,
+      "VALIDATION_ERROR",
+      "El ACUDE debe estar publicado para registrar asistencia",
+    );
+  }
   const slot = acude.schedule.find((item) => item.id === input.slotId);
   if (!slot) throw new ApiError(404, "NOT_FOUND", "La franja horaria no existe en este ACUDE");
   if (slot.day !== weekdayOf(input.date)) {
@@ -134,10 +141,13 @@ export async function saveAttendance(
   return results.sort((a, b) => a.userName.localeCompare(b.userName, "es"));
 }
 
+export type AttendanceSessionStatus = "scheduled" | "pending" | "saved";
+
 export interface AttendanceSession {
   sessionKey: string;
   acudeId: string;
   acudeName: string;
+  acudeStatus: "draft" | "published";
   slotId: string;
   date: string;
   day: string;
@@ -148,7 +158,7 @@ export interface AttendanceSession {
   teacherId: string;
   teacherName: string;
   enrolled: number;
-  status: "pending" | "saved";
+  status: AttendanceSessionStatus;
 }
 
 /** Sesiones reales de una semana/rango según el horario de cada ACUDE. */
@@ -158,21 +168,29 @@ export async function listAttendanceSessions(
     from?: string;
     to?: string;
     acudeId?: string;
-    status?: "pending" | "saved";
+    status?: AttendanceSessionStatus;
   } = {},
 ): Promise<AttendanceSession[]> {
   const today = todayKey();
+  const currentWeekStart = startOfWeek(today);
   const oldest = addDays(today, -ATTENDANCE_EDIT_WINDOW_DAYS);
-  const requestedFrom = filter.from ?? startOfWeek(today);
+  const latest = addDays(currentWeekStart, 13);
+  const requestedFrom = filter.from ?? currentWeekStart;
   const from = requestedFrom < oldest ? oldest : requestedFrom;
-  const to = (filter.to && filter.to < today ? filter.to : today);
+  const requestedTo = filter.to ?? addDays(currentWeekStart, 6);
+  const to = requestedTo > latest ? latest : requestedTo;
   if (from > to) return [];
 
-  const acudes = (
-    await listAcudes(user.role === "manager" ? { teacherId: user.uid } : {})
-  ).filter(
-    (acude) =>
-      acude.status !== "archived" && (!filter.acudeId || acude.id === filter.acudeId),
+  const scopedAcudes = (await listAcudes(
+    user.role === "manager" ? { teacherId: user.uid } : {},
+  )).filter((acude) => {
+    if (acude.status === "archived") return false;
+    // El profesor solo pasa lista de ACUDES publicados; el admin ve borradores.
+    if (user.role === "manager") return acude.status === "published";
+    return true;
+  });
+  const acudes = scopedAcudes.filter(
+    (acude) => !filter.acudeId || acude.id === filter.acudeId,
   );
   const scenarios = await listScenarioOptions();
   const scenarioNames = new Map(scenarios.map((item) => [item.id, item.name]));
@@ -188,12 +206,14 @@ export async function listAttendanceSessions(
       for (let date = from; date <= to; date = addDays(date, 1)) {
         if (weekdayOf(date) !== slot.day) continue;
         const sessionKey = `${acude.id}:${slot.id}:${date}`;
-        const status = saved.has(sessionKey) ? "saved" : "pending";
+        const status: AttendanceSessionStatus =
+          date > today ? "scheduled" : saved.has(sessionKey) ? "saved" : "pending";
         if (filter.status && filter.status !== status) continue;
         sessions.push({
           sessionKey,
           acudeId: acude.id,
           acudeName: acude.name,
+          acudeStatus: acude.status === "draft" ? "draft" : "published",
           slotId: slot.id,
           date,
           day: slot.day,
