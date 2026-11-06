@@ -10,12 +10,14 @@ import {
   buttonClass,
   cardClass,
   emptyBoxClass,
+  inputClass,
   secondaryButtonClass,
   selectClass,
 } from "@/components/ui";
 import { listEnrollments } from "@/lib/data/enrollments";
 import { ROLE_LABELS, formatDate } from "@/lib/labels";
 import { listUsers } from "@/lib/services/auth";
+import { normalizeText } from "@/lib/text";
 import { requirePageUser } from "@/lib/web/session";
 
 export const metadata: Metadata = { title: "Usuarios y roles" };
@@ -42,9 +44,18 @@ async function UsersContent({
 }) {
   await requirePageUser("admin");
   const params = await searchParams;
-  const users = await listUsers();
+  const q = first(params.q)?.trim() ?? "";
+  const allUsers = await listUsers();
+  const term = normalizeText(q);
+  const users = term
+    ? allUsers.filter((item) =>
+        normalizeText(`${item.name} ${item.email} ${item.phone ?? ""}`).includes(term),
+      )
+    : allUsers;
   const selectedId = first(params.user);
-  const selectedUser = selectedId ? users.find((item) => item.uid === selectedId) : null;
+  const selectedUser = selectedId
+    ? allUsers.find((item) => item.uid === selectedId) ?? null
+    : null;
   const enrollments = selectedId ? await listEnrollments({ userId: selectedId }) : [];
   const error = first(params.error);
   const saved = first(params.saved);
@@ -60,6 +71,20 @@ async function UsersContent({
           sus ACUDES.
         </Alert>
       </div>
+
+      <form className="mb-5 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Buscar por nombre, correo o teléfono"
+          className={`${inputClass} min-w-56 flex-1`}
+          aria-label="Buscar usuarios"
+        />
+        <button className={buttonClass}>Filtrar</button>
+        <Link href="/manager/users-all" className={secondaryButtonClass}>
+          Limpiar
+        </Link>
+      </form>
 
       {selectedUser && (
         <section className={`${cardClass} mb-5 p-5`}>
@@ -119,7 +144,10 @@ async function UsersContent({
       <div className={`${cardClass} overflow-hidden`}>
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-lg font-bold text-slate-900">Usuarios registrados</h2>
-          <Badge tone="neutral">{users.length}</Badge>
+          <Badge tone="neutral">
+            {users.length}
+            {q ? ` de ${allUsers.length}` : ""}
+          </Badge>
         </div>
         <ul className="divide-y divide-slate-100">
           {users.map((user) => {
@@ -170,7 +198,9 @@ async function UsersContent({
             );
           })}
           {users.length === 0 && (
-            <li className={`${emptyBoxClass} m-5`}>No hay usuarios registrados.</li>
+            <li className={`${emptyBoxClass} m-5`}>
+              No hay usuarios que coincidan con “{q}”.
+            </li>
           )}
         </ul>
       </div>
