@@ -164,6 +164,7 @@ export function Calendar({
     const list: CalendarEvent[] = [];
     for (const acude of filtered) {
       for (const slot of acude.schedule) {
+        if (onlyAvailable && slot.available <= 0) continue;
         if (scenarioFilter && slot.scenarioId !== scenarioFilter) continue;
         if (isStudent && onlyMine && !enrolledSlotIds.has(slot.id)) continue;
         const dayIndex = days.findIndex((date) => weekdayOf(date) === slot.day);
@@ -175,7 +176,7 @@ export function Calendar({
     return list.sort(
       (a, b) => a.date.localeCompare(b.date) || a.slot.startTime.localeCompare(b.slot.startTime),
     );
-  }, [filtered, days, isStudent, onlyMine, enrolledSlotIds, scenarioFilter]);
+  }, [filtered, days, isStudent, onlyMine, onlyAvailable, enrolledSlotIds, scenarioFilter]);
 
   const scenarioColumns = useMemo(() => {
     const map = new Map<string, string>();
