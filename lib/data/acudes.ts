@@ -262,7 +262,7 @@ async function assertScenariosExist(
   tx: FirebaseFirestore.Transaction,
   schedule: ScheduleSlot[],
 ): Promise<void> {
-  const ids = [...new Set(schedule.map((slot) => slot.scenarioId))];
+  const ids = [...new Set(schedule.map((slot) => slot.scenarioId).filter(Boolean))];
   const snaps = await Promise.all(
     ids.map((id) => tx.get(db().collection("scenarios").doc(id))),
   );

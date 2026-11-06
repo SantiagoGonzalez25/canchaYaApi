@@ -51,7 +51,7 @@ export function findScheduleConflicts(
     for (const slot of candidate.schedule) {
       for (const otherSlot of other.schedule) {
         if (!slotsOverlap(slot, otherSlot)) continue;
-        if (slot.scenarioId === otherSlot.scenarioId) {
+        if (slot.scenarioId && slot.scenarioId === otherSlot.scenarioId) {
           conflicts.push({
             type: "scenario",
             acudeId: other.id,

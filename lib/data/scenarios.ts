@@ -92,16 +92,25 @@ export async function deleteScenario(id: string): Promise<void> {
   const firestore = db();
   const scenarioRef = firestore.collection(SCENARIOS).doc(id);
   const acudes = await firestore.collection("acudes").get();
-  const usedBy = acudes.docs.find((doc) => {
-    const data = doc.data() as { schedule?: { scenarioId?: string }[]; status?: string };
+  const usedBy = acudes.docs.filter((doc) => {
+    const data = doc.data() as {
+      name?: string;
+      schedule?: { scenarioId?: string }[];
+      status?: string;
+    };
     if (data.status === "archived") return false;
     return (data.schedule ?? []).some((slot) => slot.scenarioId === id);
   });
-  if (usedBy) {
+  if (usedBy.length > 0) {
+    const names = usedBy
+      .slice(0, 3)
+      .map((doc) => (doc.data() as { name?: string }).name ?? "ACUDE sin nombre");
     throw new ApiError(
       409,
       "INVALID_STATE",
-      "No puedes eliminar un escenario",
+      `No puedes eliminar este escenario porque hay ACUDES asignados: ${names.join(", ")}${
+        usedBy.length > 3 ? ` y ${usedBy.length - 3} más` : ""
+      }. Cámbialos a otro escenario o a "Por asignar" primero.`,
     );
   }
   const snap = await scenarioRef.get();

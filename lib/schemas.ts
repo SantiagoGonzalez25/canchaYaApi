@@ -61,6 +61,13 @@ const idField = z
   .max(120)
   .regex(/^[A-Za-z0-9_-]+$/, "Identificador inválido");
 
+const optionalScenarioId = z
+  .string()
+  .trim()
+  .max(120)
+  .refine((value) => value === "" || /^[A-Za-z0-9_-]+$/.test(value), "Identificador inválido")
+  .default("");
+
 // ───────────────────────────── Autenticación ─────────────────────────────
 
 export const loginSchema = z.object({
@@ -126,7 +133,7 @@ export const scheduleSlotSchema = z
     day: weekdayEnum,
     startTime: timeField,
     endTime: timeField,
-    scenarioId: idField,
+    scenarioId: optionalScenarioId,
     maxCapacity: z.coerce.number().int().min(1).max(500).optional(),
   })
   .refine((slot) => slot.startTime < slot.endTime, {
@@ -147,7 +154,7 @@ export const acudeSchema = z
     discipline: z.string().trim().min(2, "Indica la disciplina").max(80),
     teacherId: z.string().trim().min(2, "Selecciona un docente").max(120),
     teacherName: z.string().trim().min(2, "Indica el nombre del docente").max(120),
-    scenarioId: idField,
+    scenarioId: optionalScenarioId,
     schedule: scheduleField,
     maxCapacity: z.coerce
       .number()
@@ -181,6 +188,7 @@ export const acudeSchema = z
         const a = acude.schedule[i];
         const b = acude.schedule[j];
         if (
+          a.scenarioId &&
           a.scenarioId === b.scenarioId &&
           a.day === b.day &&
           a.startTime < b.endTime &&
@@ -195,11 +203,33 @@ export const acudeSchema = z
       }
     }
     // El escenario principal debe aparecer en la programación.
-    if (!acude.schedule.some((slot) => slot.scenarioId === acude.scenarioId)) {
+    if (
+      acude.scenarioId &&
+      !acude.schedule.some((slot) => slot.scenarioId === acude.scenarioId)
+    ) {
       ctx.addIssue({
         code: "custom",
         message: "Selecciona el escenario principal también en una de las franjas",
         path: ["scenarioId"],
+      });
+    }
+    // Un ACUDE publicado no puede quedar sin espacio asignado.
+    if (acude.status === "published") {
+      if (!acude.scenarioId) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Asigna un escenario antes de publicar el ACUDE",
+          path: ["scenarioId"],
+        });
+      }
+      acude.schedule.forEach((slot, index) => {
+        if (!slot.scenarioId) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Asigna un escenario a cada franja antes de publicar",
+            path: ["schedule", index, "scenarioId"],
+          });
+        }
       });
     }
   });

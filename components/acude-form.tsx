@@ -376,12 +376,9 @@ export function AcudeForm({
                     <select
                       value={row.scenarioId}
                       onChange={(event) => patchRow(row.key, { scenarioId: event.target.value })}
-                      required
                       className={selectClass}
                     >
-                      <option value="" disabled>
-                        Selecciona
-                      </option>
+                      <option value="">Sin asignar / Por asignar</option>
                       {scenarios.map((scenario) => (
                         <option key={scenario.id} value={scenario.id}>
                           {scenario.name}
