@@ -9,11 +9,14 @@ import type {
   Enrollment,
 } from "../types";
 import type { SaveAttendanceInput } from "../schemas";
-import { weekdayOf } from "../labels";
-import { ACUDES } from "./acudes";
+import { addDays, startOfWeek, todayKey, weekdayOf } from "../labels";
+import { ACUDES, listAcudes, listScenarioOptions } from "./acudes";
 import { listActiveEnrollments } from "./enrollments";
 
 export const ATTENDANCE = "attendance";
+
+/** Días hacia atrás en los que todavía se puede corregir una asistencia. */
+export const ATTENDANCE_EDIT_WINDOW_DAYS = 14;
 
 type AttendanceDoc = Omit<AttendanceRecord, "id">;
 
@@ -58,6 +61,21 @@ export async function saveAttendance(
       400,
       "VALIDATION_ERROR",
       "La franja seleccionada no corresponde al día de la fecha indicada",
+    );
+  }
+  const today = todayKey();
+  if (input.date > today) {
+    throw new ApiError(
+      400,
+      "VALIDATION_ERROR",
+      "No puedes registrar asistencia de una fecha futura",
+    );
+  }
+  if (input.date < addDays(today, -ATTENDANCE_EDIT_WINDOW_DAYS)) {
+    throw new ApiError(
+      400,
+      "VALIDATION_ERROR",
+      `Solo puedes corregir asistencia de los últimos ${ATTENDANCE_EDIT_WINDOW_DAYS} días`,
     );
   }
 
@@ -114,6 +132,88 @@ export async function saveAttendance(
   }
   await batch.commit();
   return results.sort((a, b) => a.userName.localeCompare(b.userName, "es"));
+}
+
+export interface AttendanceSession {
+  sessionKey: string;
+  acudeId: string;
+  acudeName: string;
+  slotId: string;
+  date: string;
+  day: string;
+  startTime: string;
+  endTime: string;
+  scenarioId: string;
+  scenarioName: string;
+  teacherId: string;
+  teacherName: string;
+  enrolled: number;
+  status: "pending" | "saved";
+}
+
+/** Sesiones reales de una semana/rango según el horario de cada ACUDE. */
+export async function listAttendanceSessions(
+  user: AuthUser,
+  filter: {
+    from?: string;
+    to?: string;
+    acudeId?: string;
+    status?: "pending" | "saved";
+  } = {},
+): Promise<AttendanceSession[]> {
+  const today = todayKey();
+  const oldest = addDays(today, -ATTENDANCE_EDIT_WINDOW_DAYS);
+  const requestedFrom = filter.from ?? startOfWeek(today);
+  const from = requestedFrom < oldest ? oldest : requestedFrom;
+  const to = (filter.to && filter.to < today ? filter.to : today);
+  if (from > to) return [];
+
+  const acudes = (
+    await listAcudes(user.role === "manager" ? { teacherId: user.uid } : {})
+  ).filter(
+    (acude) =>
+      acude.status !== "archived" && (!filter.acudeId || acude.id === filter.acudeId),
+  );
+  const scenarios = await listScenarioOptions();
+  const scenarioNames = new Map(scenarios.map((item) => [item.id, item.name]));
+  const records = await listAttendance({
+    from,
+    to,
+    ...(user.role === "manager" ? { teacherId: user.uid } : {}),
+  });
+  const saved = new Set(records.map((item) => `${item.acudeId}:${item.slotId}:${item.date}`));
+  const sessions: AttendanceSession[] = [];
+
+  for (const acude of acudes) {
+    for (const slot of acude.schedule) {
+      for (let date = from; date <= to; date = addDays(date, 1)) {
+        if (weekdayOf(date) !== slot.day) continue;
+        const sessionKey = `${acude.id}:${slot.id}:${date}`;
+        const status = saved.has(sessionKey) ? "saved" : "pending";
+        if (filter.status && filter.status !== status) continue;
+        sessions.push({
+          sessionKey,
+          acudeId: acude.id,
+          acudeName: acude.name,
+          slotId: slot.id,
+          date,
+          day: slot.day,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          scenarioId: slot.scenarioId,
+          scenarioName: scenarioNames.get(slot.scenarioId) ?? "Por asignar",
+          teacherId: acude.teacherId,
+          teacherName: acude.teacherName,
+          enrolled: acude.slotEnrolled?.[slot.id] ?? 0,
+          status,
+        });
+      }
+    }
+  }
+
+  return sessions.sort(
+    (a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime),
+  );
 }
 
 export interface AttendanceFilter {

@@ -287,6 +287,13 @@ export const saveAttendanceSchema = z.object({
   records: z.array(attendanceEntrySchema).min(1, "Registra al menos una asistencia").max(300),
 });
 
+export const attendanceSessionsQuerySchema = z.object({
+  from: optionalDate,
+  to: optionalDate,
+  acudeId: idField.optional(),
+  status: z.enum(["pending", "saved"]).optional(),
+});
+
 export const attendanceQuerySchema = z.object({
   acudeId: idField.optional(),
   slotId: idField.optional(),

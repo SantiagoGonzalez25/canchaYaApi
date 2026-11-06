@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   acudeSchema,
   attendanceQuerySchema,
+  attendanceSessionsQuerySchema,
   createEnrollmentSchema,
   loginSchema,
   managerRegisterSchema,
@@ -192,6 +193,39 @@ describe("acudeSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+  it("permite un borrador sin escenario principal ni franjas asignadas", () => {
+    const result = acudeSchema.safeParse({
+      ...baseAcude,
+      status: "draft",
+      scenarioId: "",
+      schedule: [
+        { day: "tuesday", startTime: "14:00", endTime: "16:00", scenarioId: "" },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+  it("no marca cruce entre franjas sin escenario", () => {
+    const result = acudeSchema.safeParse({
+      ...baseAcude,
+      status: "draft",
+      scenarioId: "",
+      schedule: [
+        { day: "tuesday", startTime: "14:00", endTime: "16:00", scenarioId: "" },
+        { day: "tuesday", startTime: "15:00", endTime: "17:00", scenarioId: "" },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+  it("exige escenario principal y en todas las franjas al publicar", () => {
+    const result = acudeSchema.safeParse({
+      ...baseAcude,
+      scenarioId: "",
+      schedule: [
+        { day: "tuesday", startTime: "14:00", endTime: "16:00", scenarioId: "" },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("scenarioSchema", () => {
@@ -258,5 +292,20 @@ describe("reportQuerySchema", () => {
 describe("attendanceQuerySchema", () => {
   it("convierte fechas vacías en undefined", () => {
     expect(attendanceQuerySchema.parse({ date: "" }).date).toBeUndefined();
+  });
+});
+
+describe("attendanceSessionsQuerySchema", () => {
+  it("valida rango, ACUDE y estado de la sesión", () => {
+    const parsed = attendanceSessionsQuerySchema.parse({
+      from: "2026-11-02",
+      to: "2026-11-08",
+      acudeId: "futsal-formativo",
+      status: "pending",
+    });
+    expect(parsed).toMatchObject({ status: "pending", acudeId: "futsal-formativo" });
+    expect(attendanceSessionsQuerySchema.safeParse({ status: "saved" }).success).toBe(true);
+    expect(attendanceSessionsQuerySchema.safeParse({ status: "canceled" }).success).toBe(false);
+    expect(attendanceSessionsQuerySchema.safeParse({ from: "ayer" }).success).toBe(false);
   });
 });
