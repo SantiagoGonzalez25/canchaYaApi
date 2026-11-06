@@ -213,7 +213,12 @@ async function AcudeManager({
                         </Link>
                         <form action={archiveAcudeAction.bind(null, acude.id)}>
                           <ConfirmSubmit
-                            message={`¿Archivar "${acude.name}"? Dejará de aparecer en la cartelera y liberará sus franjas para otros ACUDES.`}
+                            message={`¿Archivar "${acude.name}" de ${acude.teacherName} (${acude.schedule
+                              .map(
+                                (slot) =>
+                                  `${WEEKDAY_LABELS[slot.day]} ${slot.startTime}-${slot.endTime}`,
+                              )
+                              .join(", ")})? Dejará de aparecer en la cartelera y liberará sus franjas para otros ACUDES.`}
                             className={secondaryButtonClass}
                           >
                             Archivar
