@@ -1007,6 +1007,49 @@ export function buildOpenApiSpec(): Json {
           },
         },
       },
+      "/api/users": {
+        get: {
+          tags: ["Usuarios"],
+          summary: "Listado completo de usuarios",
+          responses: {
+            "200": { description: "Usuarios", content: json({ type: "object" }) },
+            "403": r("Forbidden"),
+          },
+        },
+      },
+      "/api/users/{id}": {
+        patch: {
+          tags: ["Usuarios"],
+          summary: "Cambia rol o estado de un usuario",
+          parameters: [idParam],
+          requestBody: {
+            required: true,
+            content: json({
+              type: "object",
+              properties: {
+                role: { type: "string", enum: ["student", "manager", "admin"] },
+                status: { type: "string", enum: ["active", "inactive", "banned"] },
+              },
+            }),
+          },
+          responses: {
+            "200": { description: "Usuario actualizado", content: json({ type: "object" }) },
+            "403": r("Forbidden"),
+            "404": r("NotFound"),
+          },
+        },
+      },
+      "/api/users/{id}/enrollments": {
+        get: {
+          tags: ["Usuarios"],
+          summary: "Historial de inscripciones de un usuario",
+          parameters: [idParam],
+          responses: {
+            "200": { description: "Inscripciones", content: json({ type: "object" }) },
+            "403": r("Forbidden"),
+          },
+        },
+      },
     },
   };
 }

@@ -2,7 +2,15 @@ import "server-only";
 import { adminAuth, db } from "../firebase";
 import { getEnv } from "../env";
 import { ApiError } from "../errors";
-import type { AuthResult, AuthUser, Role, Sex, TokenSet, UserProfile } from "../types";
+import type {
+  AuthResult,
+  AuthUser,
+  Role,
+  Sex,
+  TokenSet,
+  UserProfile,
+  UserStatus,
+} from "../types";
 
 const IDENTITY = "https://identitytoolkit.googleapis.com/v1";
 const SECURE_TOKEN = "https://securetoken.googleapis.com/v1";
@@ -164,6 +172,7 @@ async function writeProfile(
     sex: input.sex,
     phone: input.phone ?? null,
     documentId: input.documentId ?? null,
+    status: "active",
     createdAt: now,
     updatedAt: now,
   };
@@ -223,12 +232,25 @@ export async function createManager(input: RegisterInput): Promise<UserProfile> 
   return writeProfile(uid, input, "manager");
 }
 
+function toUserProfile(data: Record<string, unknown>): UserProfile {
+  return {
+    ...(data as unknown as UserProfile),
+    name:
+      typeof data.name === "string" && data.name.length > 0
+        ? data.name
+        : typeof data.email === "string"
+          ? data.email
+          : "Usuario",
+    status: (data.status as UserStatus) ?? "active",
+  };
+}
+
 export async function getProfile(uid: string): Promise<UserProfile> {
   const snap = await db().collection("users").doc(uid).get();
   if (!snap.exists) {
     throw new ApiError(404, "NOT_FOUND", "Perfil de usuario no encontrado");
   }
-  return snap.data() as UserProfile;
+  return toUserProfile(snap.data() as Record<string, unknown>);
 }
 
 /** Actualiza el sexo declarado por el usuario y su claim (se aplica al renovar el token). */
@@ -242,9 +264,50 @@ export async function updateUserSex(uid: string, sex: Sex): Promise<void> {
 export async function listManagers(): Promise<UserProfile[]> {
   const snap = await db().collection("users").where("role", "==", "manager").get();
   return snap.docs
-    .map((doc) => doc.data() as UserProfile)
+    .map((doc) => toUserProfile(doc.data() as Record<string, unknown>))
     .filter((user) => typeof user.name === "string" && user.name.length > 0)
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
+
+/** Listado completo de usuarios; solo administración. */
+export async function listUsers(): Promise<UserProfile[]> {
+  const snap = await db().collection("users").get();
+  return snap.docs
+    .map((doc) => toUserProfile(doc.data() as Record<string, unknown>))
+    .filter((user) => typeof user.email === "string" && user.email.length > 0)
+    .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "es"));
+}
+
+/** Cambia rol y/o estado. Deshabilita la cuenta y revoca tokens si aplica. */
+export async function updateUserAccess(
+  uid: string,
+  input: { role?: Role; status?: UserStatus },
+): Promise<UserProfile> {
+  const ref = db().collection("users").doc(uid);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    throw new ApiError(404, "NOT_FOUND", "Usuario no encontrado");
+  }
+
+  const current = toUserProfile(snap.data() as Record<string, unknown>);
+  const role = input.role ?? current.role;
+  const status = input.status ?? current.status;
+  if (role === current.role && status === current.status) return current;
+
+  const now = new Date().toISOString();
+  await ref.set({ role, status, updatedAt: now }, { merge: true });
+
+  try {
+    const auth = adminAuth();
+    const authUser = await auth.getUser(uid);
+    await auth.setCustomUserClaims(uid, { ...(authUser.customClaims ?? {}), role });
+    await auth.updateUser(uid, { disabled: status !== "active" });
+    await auth.revokeRefreshTokens(uid).catch(() => undefined);
+  } catch {
+    // Perfil legado sin cuenta de Firebase Auth: el cambio queda en Firestore.
+  }
+
+  return { ...current, role, status, updatedAt: now };
 }
 
 export type { TokenSet };

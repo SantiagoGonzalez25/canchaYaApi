@@ -21,11 +21,14 @@ const personNameField = z
       ),
   );
 
-const optionalText = (max: number) =>
-  z.preprocess(
-    (value) => (value === "" || value === null ? undefined : value),
-    z.string().trim().max(max).optional(),
-  );
+const phoneField = z.preprocess(
+  (value) => (value === "" || value === null ? undefined : value),
+  z
+    .string()
+    .trim()
+    .regex(/^3\d{9}$/, "El teléfono debe tener 10 dígitos y empezar por 3")
+    .optional(),
+);
 
 const optionalDate = z.preprocess(
   (value) => (value === "" || value === null ? undefined : value),
@@ -70,7 +73,7 @@ export const registerSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(72),
   displayName: personNameField,
   sex: sexSchema,
-  phone: optionalText(30),
+  phone: phoneField,
 });
 
 export const managerRegisterSchema = z.object({
@@ -78,8 +81,19 @@ export const managerRegisterSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(72),
   displayName: personNameField,
   sex: sexSchema,
-  phone: optionalText(30),
+  phone: phoneField,
 });
+
+export const userStatusSchema = z.enum(["active", "inactive", "banned"]);
+
+export const updateUserSchema = z
+  .object({
+    role: roleSchema.optional(),
+    status: userStatusSchema.optional(),
+  })
+  .refine((value) => value.role !== undefined || value.status !== undefined, {
+    message: "Indica al menos un cambio de rol o estado",
+  });
 
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1),
