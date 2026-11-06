@@ -31,7 +31,12 @@ function navItems(role: "student" | "manager" | "admin"): NavItem[] {
     ...(role === "admin" ? [{ href: "/manager/scenarios", label: "Escenarios" }] : []),
     { href: "/manager/attendance", label: "Asistencia" },
     { href: "/manager/reports", label: "Reportes" },
-    ...(role === "admin" ? [{ href: "/manager/users", label: "Profesores" }] : []),
+    ...(role === "admin"
+      ? [
+          { href: "/manager/users-all", label: "Usuarios" },
+          { href: "/manager/users", label: "Profesores" },
+        ]
+      : []),
   ];
 }
 

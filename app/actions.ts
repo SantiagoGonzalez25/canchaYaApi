@@ -23,6 +23,7 @@ import {
   registerSchema,
   saveAttendanceSchema,
   scenarioSchema,
+  updateUserSchema,
   type SaveAttendanceInput,
 } from "@/lib/schemas";
 import {
@@ -30,6 +31,7 @@ import {
   createSessionCookie,
   login,
   register,
+  updateUserAccess,
 } from "@/lib/services/auth";
 import { deleteStorageImage, uploadAcudeImage } from "@/lib/services/storage";
 import {
@@ -280,6 +282,34 @@ export async function saveAttendanceAction(
   } catch (err) {
     return { error: messageOf(err) };
   }
+}
+
+export async function updateUserAccessAction(formData: FormData): Promise<void> {
+  const admin = await requireWebUser("admin");
+  const id = String(formData.get("id") ?? "");
+  const parsed = updateUserSchema.safeParse({
+    role: formData.get("role") || undefined,
+    status: formData.get("status") || undefined,
+  });
+  if (!parsed.success) {
+    redirect(`/manager/users-all?error=${encodeURIComponent(firstIssue(parsed.error))}`);
+  }
+  try {
+    if (
+      id === admin.uid &&
+      ((parsed.data.role && parsed.data.role !== "admin") ||
+        (parsed.data.status && parsed.data.status !== "active"))
+    ) {
+      throw new Error(
+        "No puedes quitarte el rol de administrador ni deshabilitar tu propia cuenta",
+      );
+    }
+    await updateUserAccess(id, parsed.data);
+  } catch (err) {
+    redirect(`/manager/users-all?error=${encodeURIComponent(messageOf(err))}`);
+  }
+  revalidatePath("/manager/users-all");
+  redirect("/manager/users-all?saved=1");
 }
 
 export async function createManagerAction(
